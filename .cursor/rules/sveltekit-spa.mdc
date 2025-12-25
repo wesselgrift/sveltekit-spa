@@ -23,7 +23,10 @@ You are an expert SvelteKit engineer. Follow these rules ALWAYS when generating 
   - Route components: +page.svelte, layouts: +layout.svelte, data: +page.ts/+layout.ts.
   - Avoid putting business logic in route files; move reusable logic to src/lib.
 - In SPA mode (ssr=false), do not rely on server-only behavior. Keep Firebase client-side.
-- Use $app/navigation (goto) and $app/stores ($page) for routing concerns.
+- Use $app/navigation (goto) and $app/state (page, navigating, updated) for routing concerns.
+  - NEVER use deprecated $app/stores - it's for legacy SvelteKit <2.12 only.
+  - Import page from $app/state: `import { page } from '$app/state'`
+  - Use `page.url.pathname` directly (no $ prefix needed - it's already reactive with runes).
 - Redirects/guards must be done in layouts for sections (e.g., protected area), not sprinkled across many pages.
 
 ============================================================
