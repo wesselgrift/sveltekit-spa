@@ -7,7 +7,9 @@
  * - state.svelte.ts (user, loading, initAuth)
  * - actions.ts (all auth action functions)
  * - guards.ts (requireAuth, requireVerifiedEmail)
+ * - errors.ts (getAuthErrorMessage)
+ * - storage.ts (setMagicLinkEmail, getMagicLinkEmail, clearMagicLinkEmail)
  * 
- * Usage: import { user, loginWithEmail, requireAuth } from '$lib/auth'
+ * Usage: import { user, loginWithEmail, requireAuth, getAuthErrorMessage } from '$lib/auth'
  */
 
