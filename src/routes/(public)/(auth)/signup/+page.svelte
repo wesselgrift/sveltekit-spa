@@ -69,9 +69,9 @@
 <div class="flex min-h-screen items-center justify-center p-4">
 	<div class="w-full max-w-md space-y-6">
 		<div class="text-center">
-			<h1 class="text-2xl font-bold">Sign Up</h1>
+			<h1 class="text-2xl font-bold">Create account</h1>
 			<p class="mt-2 text-sm text-muted-foreground">
-				Create an account to get started
+				Enter your credentials to get started
 			</p>
 		</div>
 
@@ -122,16 +122,15 @@
 					{/if}
 				</div>
 				<Button type="submit" disabled={loading || !isValid} class="w-full">
-					{loading ? 'Creating account...' : 'Sign Up'}
+					{loading ? 'Creating account...' : 'Continue'}
 				</Button>
 			</form>
 
 			<!-- Link to login page -->
 			<div class="text-center">
-				<span class="text-sm text-muted-foreground">Already have an account? </span>
-				<Button variant="link" href="/login" class="text-sm">
-					Login
-				</Button>
+				<a href="/login" class="text-sm text-muted-foreground hover:underline">
+                    Log in instead
+                </a>
 			</div>
 		</div>
 	</div>

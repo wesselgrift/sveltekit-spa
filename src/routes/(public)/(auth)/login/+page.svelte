@@ -56,7 +56,7 @@
 <div class="flex min-h-screen items-center justify-center p-4">
 	<div class="w-full max-w-md space-y-6">
 		<div class="text-center">
-			<h1 class="text-2xl font-bold">Sign In</h1>
+			<h1 class="text-2xl font-bold">Log In</h1>
 			<p class="mt-2 text-sm text-muted-foreground">
 				Enter your credentials to continue
 			</p>
@@ -97,16 +97,15 @@
 					/>
 				</div>
 				<Button type="submit" disabled={loading || !email || !password} class="w-full">
-					{loading ? 'Signing in...' : 'Sign In'}
+					{loading ? 'Logging in...' : 'Log In'}
 				</Button>
 			</form>
 
 			<!-- Links to other auth pages -->
 			<div class="space-y-2 text-center">
-				<span class="text-sm text-muted-foreground">Don't have an account? </span>
-				<Button variant="link" href="/signup" class="text-sm">
-					Sign up
-				</Button>
+				<a href="/signup" class="text-sm text-muted-foreground hover:underline">
+                    Create an account instead
+                </a>
 			</div>
 		</div>
 	</div>
