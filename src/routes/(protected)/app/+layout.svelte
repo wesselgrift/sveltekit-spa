@@ -10,7 +10,7 @@
 	let { children } = $props();
 	let redirecting = $state(false);
 
-	// Watch auth state and redirect if not authenticated
+	// Watch auth state and redirect if not authenticated or email not verified
 	// Only runs redirect logic after loading completes to prevent premature redirects
 	$effect(() => {
 		// Wait for auth to finish loading
@@ -26,6 +26,18 @@
 				const destination = page.url.pathname + page.url.search;
 				goto(`/login?next=${encodeURIComponent(destination)}`);
 			}
+			return;
+		}
+
+		// If user is authenticated but email is not verified, redirect to verify-email
+		// This handles the case where user signs up and authState updates before signup page redirect completes
+		if (authState.user && !authState.user.emailVerified && !redirecting) {
+			// Prevent redirecting to verify-email if already on verify-email page
+			if (page.url.pathname !== '/verify-email') {
+				redirecting = true;
+				const destination = page.url.pathname + page.url.search;
+				goto(`/verify-email?next=${encodeURIComponent(destination)}`);
+			}
 		}
 	});
 </script>
@@ -38,8 +50,8 @@
 			<p class="mt-4 text-sm text-muted-foreground">Loading...</p>
 		</div>
 	</div>
-{:else if authState.user}
-	<!-- Only render children when authenticated -->
+{:else if authState.user && authState.user.emailVerified}
+	<!-- Only render children when authenticated AND email is verified -->
 	{@render children()}
 {:else}
 	<!-- Show redirecting state while redirect happens -->

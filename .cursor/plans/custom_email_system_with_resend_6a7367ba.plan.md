@@ -58,7 +58,7 @@ flowchart TD
 - Generate API key from dashboard
 - Set in Firebase Functions config:
   ```bash
-          firebase functions:config:set resend.api_key="re_xxx"
+            firebase functions:config:set resend.api_key="re_xxx"
   ```
 
 
@@ -66,7 +66,7 @@ flowchart TD
 
 - For local development, create `functions/.env`:
   ```javascript
-          RESEND_API_KEY=re_xxx
+            RESEND_API_KEY=re_xxx
   ```
 
 
@@ -81,7 +81,7 @@ flowchart TD
 
 - Add to `.env` file in project root:
   ```javascript
-          PUBLIC_APP_URL=http://localhost:5173
+            PUBLIC_APP_URL=http://localhost:5173
   ```
 
 
@@ -187,8 +187,8 @@ Create/Update `.firebaserc`:
 
 - Create `src/lib/config.ts`:
   ```typescript
-          import { PUBLIC_APP_URL } from '$env/static/public';
-          export const APP_URL = PUBLIC_APP_URL || 'http://localhost:5173';
+            import { PUBLIC_APP_URL } from '$env/static/public';
+            export const APP_URL = PUBLIC_APP_URL || 'http://localhost:5173';
   ```
 
 
@@ -561,6 +561,7 @@ firebase emulators:start
 # Functions will be available at http://localhost:5001
 # Update client to use emulator:
 # functions.useEmulator('localhost', 5001)
+
 
 
 
