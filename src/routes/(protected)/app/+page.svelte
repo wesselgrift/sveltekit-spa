@@ -15,4 +15,4 @@
 </script>
 
 <!-- TODO: Implement protected page with user info and logout functionality -->
-
+Hello!
