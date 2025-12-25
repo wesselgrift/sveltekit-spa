@@ -2,30 +2,46 @@
  * Auth Guards Module
  * 
  * This file contains helper functions for route protection.
- * 
- * Will contain:
- * - `requireAuth(page: Page)` - Check if user is authenticated, redirect to /login if not
- * - `requireVerifiedEmail(page: Page)` - Check if email is verified, redirect to /verify-email if not
- * 
- * These functions will:
- * - Read from the user state rune imported from ./state.svelte.ts
- * - Use goto() from $app/navigation for client-side redirects
- * - Accept `page` parameter from `$app/stores` to access current route info
- * - Return boolean indicating if requirement is met
- * 
- * REDIRECT INTENT PRESERVATION:
- * 
- * `requireAuth(page)`:
- * - Capture original destination: `page.url.pathname + page.url.search`
- * - Redirect to `/login?next=${encodeURIComponent(destination)}`
- * - This allows login page to redirect user back to their intended destination after auth
- * - Example: User tries to access /app/dashboard?tab=settings
- *   - Redirect to: /login?next=%2Fapp%2Fdashboard%3Ftab%3Dsettings
- *   - After login, redirect to: /app/dashboard?tab=settings
- * 
- * `requireVerifiedEmail(page)`:
- * - Similarly capture original destination
- * - Redirect to `/verify-email?next=${encodeURIComponent(destination)}`
- * - After verification, redirect user back to their intended destination
  */
 
+import { goto } from '$app/navigation';
+import type { Page } from '@sveltejs/kit';
+import { authState } from './state.svelte';
+
+// Check if user is authenticated, redirect to /login if not.
+// Captures the original destination and includes it as a `next` query param
+// so the user can be redirected back after successful login.
+// Returns true if user is authenticated, false if redirected to login.
+export function requireAuth(page: Page): boolean {
+	if (authState.user === null) {
+		// Capture original destination (pathname + search params)
+		const destination = page.url.pathname + page.url.search;
+		// Redirect to login with next param for redirect after auth
+		goto(`/login?next=${encodeURIComponent(destination)}`);
+		return false;
+	}
+	return true;
+}
+
+// Check if user's email is verified, redirect to /verify-email if not.
+// Only checks if user is authenticated first (calls requireAuth).
+// Captures the original destination and includes it as a `next` query param
+// so the user can be redirected back after email verification.
+// Returns true if email is verified, false if redirected.
+export function requireVerifiedEmail(page: Page): boolean {
+	// First check if user is authenticated
+	if (!requireAuth(page)) {
+		return false;
+	}
+
+	// Check if email is verified
+	if (authState.user && !authState.user.emailVerified) {
+		// Capture original destination (pathname + search params)
+		const destination = page.url.pathname + page.url.search;
+		// Redirect to verify-email page with next param for redirect after verification
+		goto(`/verify-email?next=${encodeURIComponent(destination)}`);
+		return false;
+	}
+
+	return true;
+}

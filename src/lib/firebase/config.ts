@@ -7,10 +7,6 @@
  * All auth-related code (actions, state, guards) imports the `auth` instance
  * from this file, ensuring a singleton pattern and preventing duplicate initialization.
  * 
- * ENVIRONMENT VARIABLES:
- * - Uses PUBLIC_ prefix (SvelteKit convention for client-accessible env vars)
- * - Accesses via $env/static/public for type-safe, compile-time environment variables
- * - Required vars: PUBLIC_FIREBASE_API_KEY, PUBLIC_FIREBASE_AUTH_DOMAIN, etc.
  */
 
 import { initializeApp, getApps, type FirebaseApp } from 'firebase/app';

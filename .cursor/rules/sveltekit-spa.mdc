@@ -166,6 +166,7 @@ You are an expert SvelteKit engineer. Follow these rules ALWAYS when generating 
   - For complex blocks: add 1–3 line comments explaining the flow/decision points.
   - Keep comments accurate and updated; remove outdated comments.
 - Do not over-comment obvious JSX/markup or one-liners; focus on logic, control flow, and integration points.
+- Do NOT use JSDocs comments
 
 ============================================================
 11) Error handling + resilience
