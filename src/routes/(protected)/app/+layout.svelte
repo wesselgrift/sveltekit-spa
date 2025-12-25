@@ -5,7 +5,7 @@
 
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { user, loading } from '$lib/auth';
+	import { authState } from '$lib/auth';
 
 	let { children } = $props();
 	let redirecting = $state(false);
@@ -14,12 +14,12 @@
 	// Only runs redirect logic after loading completes to prevent premature redirects
 	$effect(() => {
 		// Wait for auth to finish loading
-		if (loading) {
+		if (authState.loading) {
 			return;
 		}
 
 		// If user is not authenticated and not already redirecting, redirect to login
-		if (user === null && !redirecting) {
+		if (authState.user === null && !redirecting) {
 			// Prevent redirecting to login if already on login page
 			if (page.url.pathname !== '/login') {
 				redirecting = true;
@@ -30,7 +30,7 @@
 	});
 </script>
 
-{#if loading}
+{#if authState.loading}
 	<!-- Show loading state while auth is initializing -->
 	<div class="flex items-center justify-center min-h-screen">
 		<div class="text-center">
@@ -38,7 +38,7 @@
 			<p class="mt-4 text-sm text-muted-foreground">Loading...</p>
 		</div>
 	</div>
-{:else if user}
+{:else if authState.user}
 	<!-- Only render children when authenticated -->
 	{@render children()}
 {:else}

@@ -5,7 +5,7 @@
  */
 
 // Re-export state
-export { authState, user, loading, initAuth } from './state.svelte';
+export { authState, initAuth } from './state.svelte';
 
 // Re-export actions
 export {

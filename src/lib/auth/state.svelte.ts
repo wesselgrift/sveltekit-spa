@@ -16,11 +16,10 @@ export const authState = $state({
 	loading: true as boolean
 });
 
-// Export convenience references for direct access
-// Components can import: import { user, loading } from '$lib/auth/state.svelte.ts'
-// These maintain reactivity when authState properties change
-export const user = $derived(authState.user);
-export const loading = $derived(authState.loading);
+// Components should import authState and access properties directly:
+// import { authState } from '$lib/auth'
+// Then use: {authState.user} or {authState.loading}
+// Since authState is a $state object, accessing its properties maintains reactivity
 
 // Module-level flag to prevent duplicate listener registration in dev/HMR
 // In development, hot module reload can cause this module to re-execute,
