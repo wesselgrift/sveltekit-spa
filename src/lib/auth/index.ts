@@ -11,8 +11,6 @@ export { authState, initAuth } from './state.svelte';
 export {
 	loginWithEmail,
 	signupWithEmail,
-	sendMagicLink,
-	verifyMagicLink,
 	resetPassword,
 	verifyPasswordResetCode,
 	confirmPasswordReset,
@@ -25,6 +23,3 @@ export { requireAuth, requireVerifiedEmail } from './guards';
 
 // Re-export error handling
 export { getAuthErrorMessage } from './errors';
-
-// Re-export storage utilities
-export { setMagicLinkEmail, getMagicLinkEmail, clearMagicLinkEmail } from './storage';
