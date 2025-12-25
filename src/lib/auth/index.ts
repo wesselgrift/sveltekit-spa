@@ -14,6 +14,8 @@ export {
 	sendMagicLink,
 	verifyMagicLink,
 	resetPassword,
+	verifyPasswordResetCode,
+	confirmPasswordReset,
 	sendVerificationEmail,
 	logout
 } from './actions';

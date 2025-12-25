@@ -1,18 +1,49 @@
 <script lang="ts">
 	/**
 	 * Protected App Page
-	 * 
-	 * Protected page accessible at /app (only when authenticated).
-	 * 
-	 * Will contain:
-	 * - Import user from $lib/auth/state.svelte.ts
-	 * - Import logout from $lib/auth/actions.ts
-	 * - Import ShadCN Button component
-	 * - Display user information (email, etc.)
-	 * - Logout button using ShadCN Button component
-	 * - Protected content that requires authentication
 	 */
+
+	import { authState } from '$lib/auth/state.svelte';
+	import { logout } from '$lib/auth/actions';
+	import { Button } from '$lib/components/ui/button';
+	import { goto } from '$app/navigation';
+
+	let loggingOut = $state(false);
+
+	// Handle logout action
+	// Redirects to login page after successful logout
+	async function handleLogout(): Promise<void> {
+		loggingOut = true;
+		try {
+			await logout();
+			// Redirect to login page after logout
+			// The auth guard will handle this automatically, but explicit redirect is clearer
+			goto('/login');
+		} catch (error) {
+			console.error('Logout error:', error);
+			// Reset logging out state on error so user can try again
+			loggingOut = false;
+		}
+	}
+
+	// Get user display name (prefer displayName, fallback to email)
+	const userName = $derived(
+		authState.user?.displayName || authState.user?.email || 'User'
+	);
 </script>
 
-<!-- TODO: Implement protected page with user info and logout functionality -->
-Hello!
+<div class="container mx-auto p-6 max-w-2xl">
+	<div class="flex flex-col gap-4">
+		<h1 class="text-2xl font-semibold">Hello, {userName}!</h1>
+		
+		<div class="flex gap-2">
+			<Button
+				onclick={handleLogout}
+				disabled={loggingOut}
+				variant="outline"
+			>
+				{loggingOut ? 'Logging out...' : 'Logout'}
+			</Button>
+		</div>
+	</div>
+</div>

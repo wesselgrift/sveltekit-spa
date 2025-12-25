@@ -11,6 +11,8 @@ import {
 	isSignInWithEmailLink,
 	signInWithEmailLink,
 	sendPasswordResetEmail,
+	verifyPasswordResetCode as firebaseVerifyPasswordResetCode,
+	confirmPasswordReset as firebaseConfirmPasswordReset,
 	sendEmailVerification,
 	signOut,
 	type User
@@ -84,9 +86,24 @@ export async function verifyMagicLink(email?: string): Promise<string | null> {
 
 // Send password reset email to the user.
 // The user will receive an email with a link to reset their password.
+// Configure action URL in Firebase Console to point to your reset password handler page.
 // Throws Firebase auth errors that should be caught and displayed to the user.
 export async function resetPassword(email: string): Promise<void> {
 	await sendPasswordResetEmail(auth, email);
+}
+
+// Verify password reset action code from URL.
+// Returns the email address associated with the reset code.
+// Throws Firebase auth errors if code is invalid or expired.
+export async function verifyPasswordResetCode(code: string): Promise<string> {
+	return await firebaseVerifyPasswordResetCode(auth, code);
+}
+
+// Confirm password reset with new password.
+// Uses the action code from the reset email URL and sets the new password.
+// Throws Firebase auth errors that should be caught and displayed to the user.
+export async function confirmPasswordReset(code: string, newPassword: string): Promise<void> {
+	await firebaseConfirmPasswordReset(auth, code, newPassword);
 }
 
 // Resend email verification to the current user.
