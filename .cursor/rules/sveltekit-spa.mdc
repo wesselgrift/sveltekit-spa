@@ -1,0 +1,205 @@
+---
+alwaysApply: true
+---
+
+# Cursor Project Rules — SvelteKit (latest) + Runes + TS + Firebase Auth + Firestore + shadcn-svelte
+
+You are an expert SvelteKit engineer. Follow these rules ALWAYS when generating or editing code.
+
+============================================================
+0) Core principles
+============================================================
+- Prefer clarity + consistency over cleverness.
+- Make changes minimal and localized.
+- Never introduce new dependencies unless explicitly requested. If a dependency is truly necessary, explain why and propose alternatives.
+- Preserve existing patterns in the codebase (naming, folder structure, error handling, UI primitives).
+- Avoid breaking public APIs/exports without updating all usage sites.
+- Default to shadcn-svelte components for UI primitives unless a plain semantic element is clearly better.
+
+============================================================
+1) SvelteKit conventions
+============================================================
+- Use SvelteKit file conventions correctly:
+  - Route components: +page.svelte, layouts: +layout.svelte, data: +page.ts/+layout.ts.
+  - Avoid putting business logic in route files; move reusable logic to src/lib.
+- In SPA mode (ssr=false), do not rely on server-only behavior. Keep Firebase client-side.
+- Use $app/navigation (goto) and $app/stores ($page) for routing concerns.
+- Redirects/guards must be done in layouts for sections (e.g., protected area), not sprinkled across many pages.
+
+============================================================
+2) Runes + state management
+============================================================
+- Prefer Runes ($state, $derived, $effect) over legacy writable stores.
+- Avoid module-level side effects that register listeners on import (especially auth listeners). Use an explicit init function called once (e.g., from root layout onMount) or idempotent subscription guards.
+- Keep state minimal:
+  - Put global app/auth state in src/lib (e.g., src/lib/auth/state.svelte.ts).
+  - Keep page-local state inside the page component unless it must be shared.
+- $effect must be cleanup-safe:
+  - Always return cleanup functions when subscribing to listeners.
+  - Prevent duplicate subscriptions in dev/HMR.
+
+============================================================
+3) TypeScript rules
+============================================================
+- Strict TypeScript: no `any`. Prefer `unknown` + narrowing when necessary.
+- Export types for public APIs and reuse them consistently.
+- Use explicit return types on exported functions.
+- Prefer small, typed helper functions over inline logic in components.
+
+============================================================
+4) Folder structure + naming
+============================================================
+- Keep shared code in src/lib:
+  - src/lib/firebase/* for Firebase config and Firestore helpers
+  - src/lib/auth/* for auth state + actions + guards
+  - src/lib/firestore/* for typed Firestore CRUD/services
+  - src/lib/components/* for reusable components
+  - src/lib/components/ui/* for shadcn-svelte components (unmodified copies unless clearly documented)
+  - src/lib/utils/* for pure utilities
+- Name files by responsibility:
+  - auth/state.svelte.ts for reactive global state
+  - auth/actions.ts for sign-in/sign-out flows
+  - auth/guards.ts for requireAuth/requireVerifiedEmail helpers (if used)
+  - firestore/collections.ts for typed collection refs
+  - firestore/services/*.ts for domain-specific operations
+
+============================================================
+5) shadcn-svelte (UI kit) rules
+============================================================
+- Prefer shadcn-svelte components for consistent design:
+  - Buttons, inputs, labels, cards, dialogs, dropdowns, toasts, tabs, tables, etc.
+- Import path conventions:
+  - Always import shadcn components from `src/lib/components/ui/*`
+  - Example: `import { Button } from "$lib/components/ui/button";`
+- Do NOT rewrite or “simplify” shadcn component internals unless explicitly requested.
+  - If changes are necessary, comment WHY and keep diffs minimal.
+- Styling:
+  - Prefer Tailwind utility classes on the consuming component over editing UI primitives.
+  - Use `cn()` utility for conditional classes if available in the project.
+- Composition:
+  - Use shadcn patterns (e.g., DialogHeader/DialogFooter, DropdownMenuTrigger, etc.) as intended.
+  - Ensure triggers and focus management stay correct (don’t break accessibility).
+- Forms:
+  - If the project uses a shadcn form pattern, follow it consistently.
+  - Always pair inputs with Label, and show inline error text in a consistent style.
+- Feedback:
+  - Use shadcn Toast/Sonner (whichever exists in repo) for success/error messages.
+  - Use Alert components for page-level errors.
+
+============================================================
+6) Firebase Auth rules
+============================================================
+- Auth state must include:
+  - `user: User | null`
+  - `loading: boolean` (true until auth resolves)
+  - `error: string | null` where useful
+- Always handle the full auth lifecycle:
+  - initial loading
+  - signed-out
+  - signed-in
+  - email verification state (if used)
+- Magic link / email link auth must:
+  - define actionCodeSettings explicitly
+  - handle the “opened on different device” case (missing stored email) by prompting for email
+- Never store tokens in localStorage manually. Let Firebase manage persistence.
+- Provide user-friendly error messages by mapping Firebase error codes to short messages.
+
+============================================================
+7) Firestore rules
+============================================================
+- Prefer typed collection/document helpers:
+  - use Firestore data converters OR a typed mapping layer.
+- Never scatter raw Firestore calls across many components:
+  - put CRUD in src/lib/firestore/* (services).
+- Reads must handle:
+  - loading state
+  - empty state
+  - error state
+- Writes must handle:
+  - disabled submit while pending
+  - success feedback
+  - error feedback
+- Prefer queries with indexes in mind; avoid unbounded reads.
+- Do not leak Firestore instance initialization across modules; keep a single initialization path.
+
+============================================================
+8) UX defaults (non-negotiable)
+============================================================
+- Every async operation MUST include:
+  - a visible loading state (spinner/skeleton/progress)
+  - a disabled state for relevant buttons/inputs
+  - an error state with actionable text
+  - an empty state when data lists are empty
+- Prefer shadcn components for UX states:
+  - Skeleton for list/content loading
+  - Spinner inside Button for pending submits
+  - Card + Alert for error/empty states
+- Forms MUST:
+  - show inline validation or at minimum clear errors near fields
+  - disable submit while pending
+  - preserve user input on failure
+  - focus the first invalid field or show a summary at top
+- Navigation MUST:
+  - preserve intent on auth redirect (use `next=` query param)
+  - return the user to `next` after successful login
+- Never block public pages behind global auth loading; gate only protected sections.
+
+============================================================
+9) Accessibility + semantics
+============================================================
+- Use semantic HTML first (button for actions, a for navigation).
+- Inputs must have associated labels (prefer shadcn Label).
+- Loading indicators must be accessible:
+  - include aria-busy where relevant
+  - include visually hidden text for spinners if needed
+- Dialogs/menus must manage focus and close on Escape (shadcn patterns usually handle this—don’t break them).
+- Color is never the only signal for error/success.
+
+============================================================
+10) Comments & explainability (required)
+============================================================
+- Add clear, descriptive comments for non-trivial logic so the code is easy to follow.
+- Comment rules:
+  - Explain *why* something exists (guards, edge cases, tricky Firebase behavior), not just *what* the line does.
+  - Place a short header comment at the top of each file describing its purpose and how it fits into the app.
+  - For functions: add a brief comment explaining inputs/outputs and side effects (network calls, navigation, storage).
+  - For complex blocks: add 1–3 line comments explaining the flow/decision points.
+  - Keep comments accurate and updated; remove outdated comments.
+- Do not over-comment obvious JSX/markup or one-liners; focus on logic, control flow, and integration points.
+
+============================================================
+11) Error handling + resilience
+============================================================
+- Catch and surface errors; never silently fail.
+- Log unexpected errors to console in dev; keep user messages short and friendly.
+- Prefer predictable error UI over throwing.
+- Avoid infinite redirect loops: guard conditions must be explicit and stable.
+- Handle offline states gracefully for Firestore operations where possible (show “You appear offline”).
+
+============================================================
+12) Performance + reactivity
+============================================================
+- Avoid unnecessary reactive loops:
+  - do not put `goto()` or network calls inside $effect without strong guards.
+- Use derived values for computed UI state instead of recomputing inside markup.
+- Minimize re-renders by keeping state local when possible.
+- Use skeletons for list loading; spinners for short actions; never show blank screens.
+
+============================================================
+13) Code style
+============================================================
+- Prefer early returns.
+- Keep functions small (< ~40 lines) when feasible.
+- Avoid deep nesting; extract helpers.
+- No commented-out code.
+- Use consistent formatting and naming already present in repo.
+
+============================================================
+14) When you (the assistant) are uncertain
+============================================================
+- Make a reasonable assumption and proceed.
+- If a choice affects architecture (e.g., SSR vs SPA, route paths), pick the simplest safe default and keep it consistent.
+- Never ask multiple questions; at most one short question at the end if absolutely required.
+
+END RULES
+
