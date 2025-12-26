@@ -14,7 +14,7 @@ export async function sendEmail(input: SendEmailInput): Promise<void> {
 
 	try {
 		const result = await resend.emails.send({
-			from: 'Sveltekit SPA <noreply@yourdomain.com>',
+			from: 'Sveltekit SPA <test@resend.dev>',
 			to: input.to,
 			subject: input.subject,
 			text: input.text
