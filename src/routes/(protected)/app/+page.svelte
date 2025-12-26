@@ -7,8 +7,10 @@
 	import { logout } from '$lib/auth/actions';
 	import { Button } from '$lib/components/ui/button';
 	import { goto } from '$app/navigation';
-
+    import { getAuth } from 'firebase/auth';
+    
 	let loggingOut = $state(false);
+	const auth = getAuth();
 
 	// Handle logout action
 	// Redirects to login page after successful logout
@@ -33,12 +35,16 @@
 
     // Mock email trigger
     async function sendEmail(): Promise<void> {
-        console.log('🔵 FRONTEND: button clicked');
 
-        const res = await fetch('/api/send-email', {
+        const user = auth.currentUser;
+        if (!user) return
+        const token = await user.getIdToken();
+
+        await fetch('/api/send-email', {
             method: 'Post',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`
             },
             body: JSON.stringify({
                 to: 'wesselgrift@gmail.com',
@@ -46,9 +52,6 @@
                 text: 'This is a mock email'
             })
         })
-
-        const data = await res.json();
-        console.log('🔵 FRONTEND: response from backend:', data);
     }
 </script>
 
