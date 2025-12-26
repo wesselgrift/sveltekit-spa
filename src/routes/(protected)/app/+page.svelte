@@ -38,9 +38,11 @@
 		const result = await sendEmail({
 			to: 'wesselgrift@gmail.com',
 			subject: 'Hello',
-			template: 'verifyEmail',
+			template: 'welcome',
             variables: {
-                verifyUrl: 'https://app.com/verify?token=abc'
+                appName: 'SvelteKit SPA',
+                appUrl: 'https://app.com/verify?token=abc',
+                supportEmail: 'info@support.com'
             }
 		});
 		console.log(result.message); // always shows success or error
