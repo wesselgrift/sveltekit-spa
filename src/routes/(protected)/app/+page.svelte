@@ -38,7 +38,10 @@
 		const result = await sendEmail({
 			to: 'wesselgrift@gmail.com',
 			subject: 'Hello',
-			text: 'This is a test email'
+			template: 'verifyEmail',
+            variables: {
+                verifyUrl: 'https://app.com/verify?token=abc'
+            }
 		});
 		console.log(result.message); // always shows success or error
 	}

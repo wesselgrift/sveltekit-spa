@@ -3,7 +3,8 @@ import { getAuth } from 'firebase/auth';
 export type SendEmailInput = {
 	to: string;
 	subject: string;
-	text: string;
+    template: string;
+    variables: {};
 };
 
 export type SendEmailResult = {
