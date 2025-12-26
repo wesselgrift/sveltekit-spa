@@ -4,10 +4,10 @@
 	 */
 
 	import { authState } from '$lib/auth/state.svelte';
+    import { getAuth } from 'firebase/auth';
 	import { logout } from '$lib/auth/actions';
 	import { Button } from '$lib/components/ui/button';
 	import { goto } from '$app/navigation';
-    import { getAuth } from 'firebase/auth';
     
 	let loggingOut = $state(false);
 	const auth = getAuth();
