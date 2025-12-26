@@ -8,10 +8,10 @@ export async function POST ({request, request: {headers}}) {
         if (!authHeader?.startsWith('Bearer ')) {
 			return json({ ok: false, message: 'Unauthorized' }, { status: 401 });
 		}
-        const idToken = authHeader.split(' ')[1];
-		const decoded = await auth.verifyIdToken(idToken);
 
-		console.log('✅ Verified user UID:', decoded.uid);
+        const idToken = authHeader.split(' ')[1];
+		
+        await auth.verifyIdToken(idToken);
         
         const payload = await request.json();
     
@@ -24,7 +24,5 @@ export async function POST ({request, request: {headers}}) {
         console.error('❌ Error sending email:', err);
 		return json({ ok: false, message: 'Unauthorized or failed' }, { status: 401 });
     }
-
-
 }
 
