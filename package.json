@@ -46,6 +46,7 @@
 		"vite-plugin-devtools-json": "^1.0.0"
 	},
 	"dependencies": {
-		"firebase": "^12.7.0"
+		"firebase": "^12.7.0",
+		"resend": "^6.6.0"
 	}
 }

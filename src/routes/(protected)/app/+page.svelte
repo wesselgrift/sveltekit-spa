@@ -30,6 +30,26 @@
 	const userName = $derived(
 		authState.user?.displayName || authState.user?.email || 'User'
 	);
+
+    // Mock email trigger
+    async function sendEmail(): Promise<void> {
+        console.log('🔵 FRONTEND: button clicked');
+
+        const res = await fetch('/api/send-email', {
+            method: 'Post',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                to: 'wesselgrift@gmail.com',
+                subject: 'Hello',
+                text: 'This is a mock email'
+            })
+        })
+
+        const data = await res.json();
+        console.log('🔵 FRONTEND: response from backend:', data);
+    }
 </script>
 
 <div class="container mx-auto p-6 max-w-2xl">
@@ -44,6 +64,7 @@
 			>
 				{loggingOut ? 'Logging out...' : 'Logout'}
 			</Button>
+            <Button onclick={sendEmail}>Send test email</Button>
 		</div>
 	</div>
 </div>
