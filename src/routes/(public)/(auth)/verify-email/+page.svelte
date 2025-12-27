@@ -9,7 +9,7 @@
 
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { authState, sendVerificationEmail, getAuthErrorMessage } from '$lib/auth';
+	import { authState, sendVerificationEmail, getAuthErrorMessage, logout } from '$lib/auth';
 	import { Button } from '$lib/components/ui/button';
 
 	// UI state
@@ -122,6 +122,15 @@
 			loading = false;
 		}
 	}
+
+    async function handleLogout(): Promise<void> {
+        try {
+            await logout();
+            goto('/signup');
+        } catch (err) {
+            error = getAuthErrorMessage(err);
+        }
+    }
 </script>
 
 <div class="flex min-h-screen items-center justify-center p-4">
@@ -172,10 +181,10 @@
 				</Button>
 			</div>
 
-			<!-- Link back to login -->
+			<!-- Sign up with different email -->
 			<div class="text-center">
-				<Button variant="link" href="/login" class="text-sm">
-					Back to login
+				<Button variant="link" onclick={handleLogout} class="text-sm">
+					Sign up with different email
 				</Button>
 			</div>
 		</div>

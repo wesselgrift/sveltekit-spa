@@ -27,7 +27,14 @@
 	// Redirect if already logged in
 	$effect(() => {
 		if (!authState.loading && authState.user !== null) {
-			goto(nextParam ?? '/app');
+			// If verified, redirect to app (or next param)
+            if (authState.user.emailVerified) {
+                goto(nextParam ?? '/app');
+            } else {
+                // If not verified, redirect to verify-email instead of app
+                // This prevents the loop where /app redirects back to /verify-email
+                goto('/verify-email');
+            }
 		}
 	});
 

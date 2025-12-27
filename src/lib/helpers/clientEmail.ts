@@ -1,4 +1,4 @@
-import { getAuth } from 'firebase/auth';
+import { auth } from '$lib/firebase/config';
 
 export type SendEmailInput = {
 	to: string;
@@ -18,8 +18,8 @@ export type SendEmailResult = {
  * Returns a uniform result object, never throws.
  */
 export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult> {
-	const auth = getAuth();
 	const user = auth.currentUser;
+
 	if (!user) return { ok: false, message: 'User not logged in' };
 
 	try {

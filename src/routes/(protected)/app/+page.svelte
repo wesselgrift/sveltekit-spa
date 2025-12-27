@@ -45,7 +45,7 @@
                 supportEmail: 'info@support.com'
             }
 		});
-		console.log(result.message); // always shows success or error
+		console.log(result.message);
 	}
 </script>
 
