@@ -4,11 +4,13 @@
 	 */
 
 	import { authState } from '$lib/auth/state.svelte';
+    import { sendEmail } from '$lib/helpers/clientEmail';
 	import { logout } from '$lib/auth/actions';
 	import { Button } from '$lib/components/ui/button';
 	import { goto } from '$app/navigation';
-
+    
 	let loggingOut = $state(false);
+
 
 	// Handle logout action
 	// Redirects to login page after successful logout
@@ -30,6 +32,21 @@
 	const userName = $derived(
 		authState.user?.displayName || authState.user?.email || 'User'
 	);
+
+    // Mock email trigger
+    async function handleSendTestEmail() {
+		const result = await sendEmail({
+			to: 'wesselgrift@gmail.com',
+			subject: 'Hello',
+			template: 'welcome',
+            variables: {
+                appName: 'SvelteKit SPA',
+                appUrl: 'https://app.com/verify?token=abc',
+                supportEmail: 'info@support.com'
+            }
+		});
+		console.log(result.message);
+	}
 </script>
 
 <div class="container mx-auto p-6 max-w-2xl">
@@ -44,6 +61,7 @@
 			>
 				{loggingOut ? 'Logging out...' : 'Logout'}
 			</Button>
+            <Button onclick={handleSendTestEmail}>Send test email</Button>
 		</div>
 	</div>
 </div>

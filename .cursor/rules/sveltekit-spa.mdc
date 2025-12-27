@@ -86,7 +86,7 @@ You are an expert SvelteKit engineer. Follow these rules ALWAYS when generating 
   - If the project uses a shadcn form pattern, follow it consistently.
   - Always pair inputs with Label, and show inline error text in a consistent style.
 - Feedback:
-  - Use shadcn Toast/Sonner (whichever exists in repo) for success/error messages.
+  - Use shadcn Toast/Sonner for success/error messages.
   - Use Alert components for page-level errors.
 
 ============================================================
