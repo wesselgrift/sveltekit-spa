@@ -48,6 +48,7 @@
 	"dependencies": {
 		"firebase": "^12.7.0",
 		"firebase-admin": "^13.6.0",
-		"resend": "^6.6.0"
+		"resend": "^6.6.0",
+		"zod": "^4.2.1"
 	}
 }

@@ -1,16 +1,15 @@
+/**
+ * Server-side email sending via Resend.
+ * Uses validated input from the API endpoint.
+ */
+
 import { Resend } from 'resend'
 import { RESEND_API_KEY } from '$env/static/private';
 import fs from 'fs';
 import path from 'path';
+import type { SendEmailInput } from './validation';
 
 const resend = new Resend(RESEND_API_KEY);
-
-export type SendEmailInput = {
-	to: string;
-	subject: string;
-	template: string;
-	variables?: Record<string, string | number>;
-};
 
 function loadTemplate(
 	templateName: string,

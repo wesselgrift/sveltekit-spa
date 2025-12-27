@@ -1,10 +1,26 @@
+/**
+ * Client-side email helper.
+ * Sends emails via the authenticated /api/send-email endpoint.
+ */
+
 import { auth } from '$lib/firebase/config';
+
+// Allowed template names (must match server validation)
+type AllowedTemplate = 
+	| 'welcome'
+	| 'verifyEmail'
+	| 'passwordReset'
+	| 'passwordSet'
+	| 'passwordChanged'
+	| 'emailChanged'
+	| 'emailChangeVerification'
+	| 'accountDeleted';
 
 export type SendEmailInput = {
 	to: string;
 	subject: string;
-    template: string;
-    variables: {};
+	template: AllowedTemplate;
+	variables?: Record<string, string | number>;
 };
 
 export type SendEmailResult = {
