@@ -14,6 +14,8 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
     import { Spinner } from '$lib/components/ui/spinner';
+    import  { Alert, AlertTitle, AlertDescription } from '$lib/components/ui/alert';
+    import { Logo } from '$lib/components/ui/logo';
 
 	// Form state
 	let email = $state('');
@@ -59,11 +61,15 @@
 
 <div class="flex min-h-screen items-center justify-center p-4">
 	<div class="w-full max-w-sm flex flex-col gap-8">
+        <Logo />
 		<h1 class="text-2xl font-medium">Create account</h1>
 
 		<div class="flex flex-col gap-5">
 			{#if error}
-				<p class="text-sm text-destructive">{error}</p>
+                <Alert variant="destructive">
+                    <AlertTitle>Whoops!</AlertTitle>
+                    <AlertDescription>{error}</AlertDescription>
+                </Alert>
 			{/if}
 
 			<form onsubmit={(e) => { e.preventDefault(); handleSubmit(); }} class="flex flex-col gap-5">

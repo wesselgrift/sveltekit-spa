@@ -11,12 +11,19 @@
 	import { page } from '$app/state';
 	import { authState, sendVerificationEmail, getAuthErrorMessage, logout } from '$lib/auth';
 	import { Button } from '$lib/components/ui/button';
+    import { Spinner } from '$lib/components/ui/spinner';
+    import  { Alert, AlertTitle, AlertDescription } from '$lib/components/ui/alert';
+    import { Mail, Check, Frown } from '@lucide/svelte';
+    import { Logo } from '$lib/components/ui/logo';
 
 	// UI state
 	let loading = $state(false);
 	let error = $state<string | null>(null);
-	let success = $state<string | null>(null);
 	let checkingVerification = $state(false);
+
+	// Button feedback states
+	let resendFeedback = $state<'sent' | null>(null);
+	let checkFeedback = $state<'verified' | 'not-verified' | null>(null);
 
 	// Get next param for redirect after verification
 	const nextParam = $derived(page.url.searchParams.get('next'));
@@ -89,13 +96,20 @@
 			error = null;
 			// Reload user to get latest emailVerified status
 			await authState.user.reload();
-			
+
 			// Check if verified after reload
 			if (authState.user.emailVerified) {
-				// Redirect to app or next param
-				goto(nextParam ?? '/app');
+				checkFeedback = 'verified';
+				setTimeout(() => {
+					checkFeedback = null;
+					// Redirect after feedback shows
+					goto(nextParam ?? '/app');
+				}, 1500);
 			} else {
-				success = 'Email not yet verified. Please check your inbox and click the verification link.';
+				checkFeedback = 'not-verified';
+				setTimeout(() => {
+					checkFeedback = null;
+				}, 1500);
 			}
 		} catch (err) {
 			error = getAuthErrorMessage(err);
@@ -113,9 +127,11 @@
 		try {
 			loading = true;
 			error = null;
-			success = null;
 			await sendVerificationEmail(authState.user);
-			success = 'Verification email sent! Please check your inbox.';
+			resendFeedback = 'sent';
+			setTimeout(() => {
+				resendFeedback = null;
+			}, 1500);
 		} catch (err) {
 			error = getAuthErrorMessage(err);
 		} finally {
@@ -134,59 +150,82 @@
 </script>
 
 <div class="flex min-h-screen items-center justify-center p-4">
-	<div class="w-full max-w-md space-y-6">
-		<div class="text-center">
-			<h1 class="text-2xl font-bold">Verify Your Email</h1>
-			<p class="mt-2 text-sm text-muted-foreground">
-				{#if userEmail}
-					We've sent a verification email to <strong>{userEmail}</strong>
-				{:else}
-					Please verify your email address to continue
-				{/if}
-			</p>
+	<div class="w-full max-w-sm flex flex-col gap-5">
+        <Logo />
+		<div class="flex flex-col gap-2.5">
+            {#if error}
+                <Alert variant="destructive">
+                    <Frown />
+                    <AlertTitle>Whoops!</AlertTitle>
+                    <AlertDescription>{error}</AlertDescription>
+                </Alert>
+			{/if}
+
+            <Alert>
+                <Mail />
+                <AlertTitle>Check your email</AlertTitle>
+                <AlertDescription>
+                    {#if userEmail}
+                        We've sent a verification email to {userEmail}
+                    {:else}
+                        Please verify your email address to continue
+                    {/if}
+                </AlertDescription>
+            </Alert>
 		</div>
 
-		<div class="space-y-4">
-			{#if error}
-				<p class="text-sm text-destructive">{error}</p>
-			{/if}
-
-			{#if success}
-				<p class="text-sm text-green-600">{success}</p>
-			{/if}
-
-			{#if userEmail}
-				<div class="rounded-lg border p-4 text-center">
-					<p class="text-sm text-muted-foreground mb-2">Email address:</p>
-					<p class="font-medium">{userEmail}</p>
-				</div>
-			{/if}
-
-			<div class="space-y-2">
+		<div class="flex flex-col gap-5">
+			<div class="flex flex-col gap-2.5">
 				<Button
 					onclick={handleResendVerification}
 					disabled={loading || !authState.user}
-					class="w-full"
+                    class="w-full"
 				>
-					{loading ? 'Sending...' : 'Resend Verification Email'}
+                    <!-- Buton icon -->
+                    {#if loading}
+                        <Spinner />
+                    {:else if resendFeedback === 'sent'}
+                        <Check />
+                    {/if}
+
+                    <!-- Button label -->
+                    {#if resendFeedback === 'sent'}
+                        Sent
+                    {:else}
+                        Resend
+                    {/if}
 				</Button>
 
 				<Button
 					variant="outline"
 					onclick={handleCheckVerification}
 					disabled={checkingVerification || !authState.user}
-					class="w-full"
+                    class="w-full"
 				>
-					{checkingVerification ? 'Checking...' : 'I verified, refresh'}
+                    <!-- Buton icon -->
+                    {#if checkingVerification}
+                        <Spinner />
+                    {:else if checkFeedback === 'verified'}
+                        <Check />
+                    {:else if checkFeedback === 'not-verified'}
+                        <Frown />
+                    {/if}
+
+                    <!-- Button label -->
+                    {#if checkFeedback === 'verified'}
+                        Verified
+                    {:else if checkFeedback === 'not-verified'}
+                        Not verified yet
+                    {:else}
+                        I verified, refresh
+                    {/if}
 				</Button>
 			</div>
 
 			<!-- Sign up with different email -->
-			<div class="text-center">
-				<Button variant="link" onclick={handleLogout} class="text-sm">
-					Sign up with different email
-				</Button>
-			</div>
+            <span role="presentation" class="text-sm text-center text-muted-foreground cursor-pointer hover:underline" onclick={handleLogout}>
+                Sign up with different email
+            </span>
 		</div>
 	</div>
 </div>
