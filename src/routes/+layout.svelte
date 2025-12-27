@@ -16,10 +16,18 @@
 	 */
 	import './layout.css';
 	import favicon from '$lib/assets/favicon.svg';
+    import { onMount } from 'svelte';
+    import { ModeWatcher, resetMode } from "mode-watcher";
+
+    // Have mode watcher follow system theme
+    onMount(() => {
+        resetMode();
+    });
 
 	let { children } = $props();
 </script>
 
 <svelte:head><link rel="icon" href={favicon} /></svelte:head>
 
+<ModeWatcher />
 {@render children()}
