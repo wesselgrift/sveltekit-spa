@@ -16,6 +16,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
+    import { Spinner } from '$lib/components/ui/spinner';
 
 	// Form state
 	let email = $state('');
@@ -54,22 +55,17 @@
 </script>
 
 <div class="flex min-h-screen items-center justify-center p-4">
-	<div class="w-full max-w-md space-y-6">
-		<div class="text-center">
-			<h1 class="text-2xl font-bold">Log In</h1>
-			<p class="mt-2 text-sm text-muted-foreground">
-				Enter your credentials to continue
-			</p>
-		</div>
+	<div class="w-full max-w-sm flex flex-col gap-8">
+		<h1 class="text-2xl font-medium">Log in</h1>
 
-		<div class="space-y-4">
+		<div class="flex flex-col gap-5">
 			{#if error}
 				<p class="text-sm text-destructive">{error}</p>
 			{/if}
 
 			<!-- Email/Password Form -->
-			<form onsubmit={(e) => { e.preventDefault(); handleEmailPasswordLogin(); }} class="space-y-4">
-				<div class="space-y-2">
+			<form onsubmit={(e) => { e.preventDefault(); handleEmailPasswordLogin(); }} class="flex flex-col gap-5">
+				<div class="flex flex-col gap-2.5">
 					<Label for="email">Email</Label>
 					<Input
 						id="email"
@@ -80,10 +76,10 @@
 						disabled={loading}
 					/>
 				</div>
-				<div class="space-y-2">
+				<div class="flex flex-col gap-2.5">
 					<div class="flex flex-row justify-between">
 						<Label for="password">Password</Label>
-						<a href="/reset-password" class="text-sm text-muted-foreground hover:underline">
+						<a href="/reset-password" class="text-sm leading-none text-muted-foreground hover:underline">
 							Forgot password?
 						</a>
 					</div>
@@ -96,13 +92,16 @@
 						disabled={loading}
 					/>
 				</div>
-				<Button type="submit" disabled={loading || !email || !password} class="w-full">
-					{loading ? 'Logging in...' : 'Log In'}
+				<Button type="submit" disabled={loading} class="w-full">
+					{#if loading}
+                        <Spinner />
+                    {/if}
+                    Log in
 				</Button>
 			</form>
 
 			<!-- Links to other auth pages -->
-			<div class="space-y-2 text-center">
+			<div class="flex flex-col gap-2.5 text-center">
 				<a href="/signup" class="text-sm text-muted-foreground hover:underline">
                     Create an account instead
                 </a>

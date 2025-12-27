@@ -11,6 +11,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
+    import { Spinner } from '$lib/components/ui/spinner';
 
 	// Form state
 	let email = $state('');
@@ -18,15 +19,7 @@
 	let error = $state<string | null>(null);
 	let success = $state(false);
 
-	// Validation
-	const isValid = $derived(email.length > 0);
-
 	async function handleSubmit(): Promise<void> {
-		if (!isValid) {
-			error = 'Please enter your email address';
-			return;
-		}
-
 		try {
 			loading = true;
 			error = null;
@@ -42,18 +35,13 @@
 </script>
 
 <div class="flex min-h-screen items-center justify-center p-4">
-	<div class="w-full max-w-md space-y-6">
-		<div class="text-center">
-			<h1 class="text-2xl font-bold">Reset Password</h1>
-			<p class="mt-2 text-sm text-muted-foreground">
-				Enter your email address and we'll send you a link to reset your password
-			</p>
-		</div>
+	<div class="w-full max-w-sm flex flex-col gap-8">
+        <h1 class="text-2xl font-medium">Reset Password</h1>
 
 		{#if success}
-			<div class="space-y-4 text-center">
+			<div class="flex flex-col gap-5">
 				<div class="rounded-lg border p-4">
-					<h2 class="text-lg font-semibold mb-2">Check your email</h2>
+					<h2 class="text-sm font-semibold mb-1">Check your email</h2>
 					<p class="text-sm text-muted-foreground">
 						We've sent password reset instructions to your email address.
 						Please check your inbox and follow the link to reset your password.
@@ -64,7 +52,7 @@
 				</Button>
 			</div>
 		{:else}
-			<div class="space-y-4">
+			<div class="flex flex-col gap-5">
 				{#if error}
 					<p class="text-sm text-destructive">{error}</p>
 				{/if}
@@ -74,9 +62,9 @@
 						e.preventDefault();
 						handleSubmit();
 					}}
-					class="space-y-4"
+					class="flex flex-col gap-5"
 				>
-					<div class="space-y-2">
+					<div class="flex flex-col gap-2.5">
 						<Label for="email">Email</Label>
 						<Input
 							id="email"
@@ -87,16 +75,19 @@
 							disabled={loading}
 						/>
 					</div>
-					<Button type="submit" disabled={loading || !isValid} class="w-full">
-						{loading ? 'Sending...' : 'Send Reset Link'}
+					<Button type="submit" disabled={loading} class="w-full">
+						{#if loading}
+                            <Spinner />
+                        {/if}
+                        Send reset link
 					</Button>
 				</form>
 
 				<!-- Link back to login -->
 				<div class="text-center">
-					<Button variant="link" href="/login" class="text-sm">
-						Back to login
-					</Button>
+                    <a href="/login" class="text-muted-foreground text-sm hover:underline">
+                        Back to login
+                    </a>
 				</div>
 			</div>
 		{/if}

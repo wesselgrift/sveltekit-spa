@@ -7,6 +7,7 @@
 import {
 	signInWithEmailAndPassword,
 	createUserWithEmailAndPassword,
+    updateProfile,
 	sendPasswordResetEmail,
 	verifyPasswordResetCode as firebaseVerifyPasswordResetCode,
 	confirmPasswordReset as firebaseConfirmPasswordReset,
@@ -25,9 +26,15 @@ export async function loginWithEmail(email: string, password: string): Promise<v
 // Create a new account with email and password, then send verification email.
 // The user will need to verify their email before they can access protected features.
 // Throws Firebase auth errors that should be caught and displayed to the user.
-export async function signupWithEmail(email: string, password: string): Promise<void> {
+export async function signupWithEmail(firstName: string, lastName: string, email: string, password: string): Promise<void> {
 	const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-	// Automatically send verification email after account creation
+	
+    // Set display name
+    await updateProfile(userCredential.user, {
+        displayName: `${firstName.trim()} ${lastName.trim()}`
+    });
+    
+    // Automatically send verification email after account creation
 	await sendEmailVerification(userCredential.user);
 }
 
