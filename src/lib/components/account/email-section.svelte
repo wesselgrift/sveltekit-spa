@@ -95,7 +95,7 @@
             </div>
 
             {#if error}
-                <div class="h-8 px-2 flex gap-2 items-center rounded-md text-sm text-red-700 bg-red-50 border border-red-200">
+                <div class="h-8 px-2 flex gap-2 items-center rounded-md text-sm border text-red-700 bg-red-50 border-red-200 dark:text-red-50 dark:bg-red-700 dark:border-red-600">
                     <CircleAlert class="size-4" />
                     {errorMessage}
                 </div>
@@ -103,7 +103,7 @@
 
             <div class="flex flex-row gap-2 mb-4">
                 {#if success}
-                    <div class="h-auto py-2 px-2 flex gap-2 items-start rounded-md text-sm text-emerald-700 bg-emerald-50 border border-emerald-200">
+                    <div class="h-auto py-2 px-2 flex gap-2 items-start rounded-md text-sm border text-emerald-700 bg-emerald-50 border-emerald-100 dark:text-emerald-200 dark:bg-emerald-700 dark:border-emerald-600">
                         <Check class="size-4 mt-0.5 shrink-0" />
                         Verification email sent to {sentToEmail} wesselgrift+91@gmail.com
                     </div>

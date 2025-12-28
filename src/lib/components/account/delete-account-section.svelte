@@ -71,7 +71,7 @@
                     <Input type="password" bind:value={password} disabled={deleting} />
                 </div>
                 {#if error}
-                    <div class="h-8 px-2 flex gap-2 items-center rounded-md text-sm text-red-50 bg-red-800">
+                    <div class="h-8 px-2 flex gap-2 items-center rounded-md text-sm text-red-700 bg-red-100 border-red-200 dark:text-red-50 dark:bg-red-700 dark:border-red-600">
                         <CircleAlert class="size-4" />
                         {errorMessage}
                     </div>
