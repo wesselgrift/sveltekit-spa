@@ -1,9 +1,11 @@
 <script lang="ts">
-    import NameSection from '$lib/components/account/name-section.svelte'
-    import EmailSection from '$lib/components/account/email-section.svelte'
-    import PasswordSection from '$lib/components/account/password-section.svelte'
-    import LogOutSection from '$lib/components/account/logout-section.svelte'
-    import DeleteAccountSection from '$lib/components/account/delete-account-section.svelte'
+    import {
+        NameSection,
+        EmailSection,
+        PasswordSection,
+        LogoutSection,
+        DeleteAccountSection
+    } from '$lib/components/account/sections';
 </script>
 
 <div class="flex flex-col gap-3 mb-5">
@@ -12,7 +14,7 @@
         <NameSection />
         <EmailSection />
         <PasswordSection />
-        <LogOutSection />
+        <LogoutSection />
     </div>
 </div>
 
