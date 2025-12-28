@@ -17,6 +17,7 @@ import {
 	EmailAuthProvider,
 	verifyBeforeUpdateEmail,
 	updatePassword,
+	deleteUser,
 	type User
 } from 'firebase/auth';
 import { auth } from '../firebase/config';
@@ -107,4 +108,20 @@ export async function changePassword(currentPassword: string, newPassword: strin
 
 	// Update to new password (takes effect immediately)
 	await updatePassword(user, newPassword);
+}
+
+// Delete the current user's account permanently.
+// Requires the current password for re-authentication.
+// This action is irreversible and will delete all user data.
+// Throws Firebase auth errors that should be caught and displayed to the user.
+export async function deleteAccount(currentPassword: string): Promise<void> {
+	const user = auth.currentUser;
+	if (!user || !user.email) throw new Error('No user signed in');
+
+	// Re-authenticate with current password
+	const credential = EmailAuthProvider.credential(user.email, currentPassword);
+	await reauthenticateWithCredential(user, credential);
+
+	// Delete the user account
+	await deleteUser(user);
 }

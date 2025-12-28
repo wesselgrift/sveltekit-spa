@@ -17,7 +17,8 @@ export {
 	sendVerificationEmail,
 	logout,
 	changeEmail,
-	changePassword
+	changePassword,
+	deleteAccount
 } from './actions';
 
 // Re-export guards

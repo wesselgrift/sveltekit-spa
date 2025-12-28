@@ -151,7 +151,9 @@
 
 <div class="flex min-h-screen items-center justify-center p-4">
 	<div class="w-full max-w-sm flex flex-col gap-5">
-        <Logo />
+        <div class="mb-2">
+            <Logo />
+        </div>
 		<div class="flex flex-col gap-2.5">
             {#if error}
                 <Alert variant="destructive">
