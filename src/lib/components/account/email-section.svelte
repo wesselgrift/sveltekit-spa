@@ -103,9 +103,9 @@
 
             <div class="flex flex-row gap-2 mb-4">
                 {#if success}
-                    <div class="h-auto py-2 px-2 flex gap-2 items-center rounded-md text-sm text-emerald-700 bg-emerald-50 border border-emerald-200">
-                        <Check class="size-4 shrink-0" />
-                        Verification email sent to {sentToEmail}
+                    <div class="h-auto py-2 px-2 flex gap-2 items-start rounded-md text-sm text-emerald-700 bg-emerald-50 border border-emerald-200">
+                        <Check class="size-4 mt-0.5 shrink-0" />
+                        Verification email sent to {sentToEmail} wesselgrift+91@gmail.com
                     </div>
                 {:else}
                     <Button onclick={saveEmail} variant="default" size="sm" disabled={loading}>

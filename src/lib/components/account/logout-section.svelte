@@ -1,7 +1,7 @@
 <script lang="ts">
     import { goto } from '$app/navigation';
-    import { Button } from '$lib/components/ui/button'
-    import { KeyRound } from '@lucide/svelte'
+    import { Button } from '$lib/components/ui/button';
+    import { KeyRound } from '@lucide/svelte';
     import { logout } from '$lib/auth/actions';
     import { Spinner } from "$lib/components/ui/spinner";
 

@@ -16,6 +16,7 @@ import {
 	reauthenticateWithCredential,
 	EmailAuthProvider,
 	verifyBeforeUpdateEmail,
+	updatePassword,
 	type User
 } from 'firebase/auth';
 import { auth } from '../firebase/config';
@@ -90,4 +91,20 @@ export async function changeEmail(currentPassword: string, newEmail: string): Pr
 
 	// Send verification to new email (email only changes after verification)
 	await verifyBeforeUpdateEmail(user, newEmail);
+}
+
+// Change the user's password.
+// Requires the current password for re-authentication.
+// Password updates immediately after successful call.
+// Throws Firebase auth errors that should be caught and displayed to the user.
+export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+	const user = auth.currentUser;
+	if (!user || !user.email) throw new Error('No user signed in');
+
+	// Re-authenticate with current password
+	const credential = EmailAuthProvider.credential(user.email, currentPassword);
+	await reauthenticateWithCredential(user, credential);
+
+	// Update to new password (takes effect immediately)
+	await updatePassword(user, newPassword);
 }
