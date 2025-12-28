@@ -7,6 +7,7 @@
 	import { logout } from '$lib/auth/actions';
 	import { Button } from '$lib/components/ui/button';
     import { Spinner } from "$lib/components/ui/spinner";
+    import { AccountSettings } from '$lib/components/account'
 	import { goto } from '$app/navigation';
     
 	let loggingOut = $state(false);
@@ -37,7 +38,7 @@
 <div class="container mx-auto p-6 max-w-2xl">
 	<div class="flex flex-col gap-4">
 		<h1 class="text-2xl font-semibold">Hello, {userName}!</h1>
-		
+		<AccountSettings />
 		<div class="flex gap-2">
 			<Button onclick={handleLogout} disabled={loggingOut} variant="outline">
             {#if loggingOut}
