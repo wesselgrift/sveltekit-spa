@@ -2,7 +2,7 @@
     import { authState } from '$lib/auth/state.svelte';
     import { splitDisplayName } from '$lib/helpers/name-helpers';
 
-    $: nameParts = authState.user?.displayName ? splitDisplayName(authState.user.displayName) : { firstName: '', lastName: '' };
+    let nameParts = $derived(authState.user?.displayName ? splitDisplayName(authState.user.displayName) : { firstName: '', lastName: '' });
 </script>
 
 First name: {nameParts.firstName} <br>
