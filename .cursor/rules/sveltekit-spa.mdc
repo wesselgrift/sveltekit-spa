@@ -70,7 +70,7 @@ You are an expert SvelteKit engineer. Follow these rules ALWAYS when generating 
 5) shadcn-svelte (UI kit) rules
 ============================================================
 - Prefer shadcn-svelte components for consistent design:
-  - Buttons, inputs, labels, cards, dialogs, dropdowns, toasts, tabs, tables, etc.
+  - Buttons, inputs, labels, cards, dialogs, dropdowns, toasts, tabs, tables, spinners, etc.
 - Import path conventions:
   - Always import shadcn components from `src/lib/components/ui/*`
   - Example: `import { Button } from "$lib/components/ui/button";`
