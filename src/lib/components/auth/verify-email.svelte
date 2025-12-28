@@ -4,16 +4,23 @@
 	 * 
 	 * Email verification page accessible at /verify-email.
 	 * Handles email verification flow: displays user email, allows resending verification,
-	 * and auto-redirects when email is verified.
+	 * and reports verification/auth changes so the parent page can navigate.
 	 */
 
-    import { goto } from '$app/navigation';
-	import { page } from '$app/state';
 	import { authState, sendVerificationEmail, getAuthErrorMessage, logout } from '$lib/auth';
 	import { Button } from '$lib/components/ui/button';
-    import { Spinner } from '$lib/components/ui/spinner';
-    import  { Alert, AlertTitle, AlertDescription } from '$lib/components/ui/alert';
-    import { Mail, Check, Frown } from '@lucide/svelte';
+	import { Spinner } from '$lib/components/ui/spinner';
+	import { Alert, AlertTitle, AlertDescription } from '$lib/components/ui/alert';
+	import { Mail, Check, Frown } from '@lucide/svelte';
+
+	const noop = () => {};
+
+	// Let parent pages control navigation flows (login redirect, verified redirect, sign-out).
+	const { onRequireAuth = noop, onVerified = noop, onSignOut = noop } = $props<{
+		onRequireAuth?: () => void;
+		onVerified?: () => void;
+		onSignOut?: () => void;
+	}>();
 
 	// UI state
 	let loading = $state(false);
@@ -24,18 +31,8 @@
 	let resendFeedback = $state<'sent' | null>(null);
 	let checkFeedback = $state<'verified' | 'not-verified' | null>(null);
 
-	// Get next param for redirect after verification
-	const nextParam = $derived(page.url.searchParams.get('next'));
-
 	// Get user email for display
 	const userEmail = $derived(authState.user?.email ?? null);
-
-	// Redirect if not authenticated
-	$effect(() => {
-		if (!authState.loading && authState.user === null) {
-			goto('/login');
-		}
-	});
 
 	// Auto-check email verification status periodically
 	// Firebase user.emailVerified won't update in-memory until reload
@@ -47,12 +44,13 @@
 
 		const user = authState.user;
 		if (!user) {
+			onRequireAuth();
 			return;
 		}
 
 		// If already verified, redirect immediately
 		if (user.emailVerified) {
-			goto(nextParam ?? '/app');
+			onVerified();
 			return;
 		}
 
@@ -70,7 +68,7 @@
 				// Check if verified after reload
 				if (authState.user.emailVerified) {
 					clearInterval(intervalId);
-					goto(nextParam ?? '/app');
+					onVerified();
 				}
 			} catch (err) {
 				// Silently fail polling - user can use manual refresh button
@@ -101,8 +99,8 @@
 				checkFeedback = 'verified';
 				setTimeout(() => {
 					checkFeedback = null;
-					// Redirect after feedback shows
-					goto(nextParam ?? '/app');
+					// Let page redirect after brief feedback window
+					onVerified();
 				}, 1500);
 			} else {
 				checkFeedback = 'not-verified';
@@ -141,7 +139,7 @@
     async function handleLogout(): Promise<void> {
         try {
             await logout();
-            goto('/signup');
+			onSignOut();
         } catch (err) {
             error = getAuthErrorMessage(err);
         }

@@ -17,10 +17,17 @@
 
 	// Redirect if user is (already) logged in
 	$effect(() => {
-		if (!authState.loading && authState.user !== null) {
-			goto(nextParam ?? '/app');
-		}
-	});
+        if (authState.loading || authState.user === null) {
+            return;
+        }
+
+        if (authState.user.emailVerified) {
+            goto(nextParam ?? '/app');
+        } else {
+            const next = nextParam ? `?next=${encodeURIComponent(nextParam)}` : '';
+            goto(`/verify-email${next}`);
+        }
+    });
 </script>
 
 <div class="flex min-h-screen items-center justify-center p-4">
