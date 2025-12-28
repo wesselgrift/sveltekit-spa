@@ -6,7 +6,7 @@
 	 */
 
     import { Logo } from '$lib/components/ui/logo';
-    import { ResetPassword } from '$lib/components/auth';
+    import { ResetPassword as ResetPasswordForm } from '$lib/components/auth';
 
 </script>
 
@@ -16,7 +16,7 @@
         <h1 class="text-2xl font-medium">Reset Password</h1>
 
         <!-- Reset Password Form component -->
-		<ResetPassword />
+		<ResetPasswordForm />
 
         <!-- Link back to login -->
         <div class="text-center">
