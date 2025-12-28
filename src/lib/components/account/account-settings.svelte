@@ -8,7 +8,7 @@
 
 <div class="flex flex-col gap-3 mb-5">
     <h3 class="font-semibold">Account</h3>
-    <div class="flex flex-col border rounded-md">
+    <div class="flex flex-col bg-card border rounded-md">
         <NameSection />
         <EmailSection />
         <PasswordSection />
