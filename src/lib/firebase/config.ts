@@ -1,16 +1,16 @@
 /**
  * Firebase Configuration
  * 
- * This file initializes the Firebase app and exports the auth instance.
+ * This file initializes the Firebase app and exports auth and Firestore instances.
  * This is the single source of truth for Firebase initialization in the app.
  * 
- * All auth-related code (actions, state, guards) imports the `auth` instance
- * from this file, ensuring a singleton pattern and preventing duplicate initialization.
- * 
+ * All Firebase-related code imports instances from this file, ensuring a
+ * singleton pattern and preventing duplicate initialization.
  */
 
 import { initializeApp, getApps, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
+import { getFirestore, type Firestore } from 'firebase/firestore';
 import {
 	PUBLIC_FIREBASE_API_KEY,
 	PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -44,3 +44,7 @@ if (getApps().length === 0) {
 // All auth operations throughout the app use this single instance,
 // ensuring consistent state and preventing multiple auth listeners.
 export const auth: Auth = getAuth(app);
+
+// Export singleton Firestore instance
+// All Firestore operations throughout the app use this single instance.
+export const db: Firestore = getFirestore(app);

@@ -21,6 +21,7 @@ import {
 	type User
 } from 'firebase/auth';
 import { auth } from '../firebase/config';
+import { createUserDocument } from '../firestore/users';
 
 // Sign in with email and password.
 // Throws Firebase auth errors that should be caught and displayed to the user.
@@ -30,16 +31,20 @@ export async function loginWithEmail(email: string, password: string): Promise<v
 
 // Create a new account with email and password, then send verification email.
 // The user will need to verify their email before they can access protected features.
+// Also creates a Firestore user document to store additional profile data.
 // Throws Firebase auth errors that should be caught and displayed to the user.
 export async function signupWithEmail(firstName: string, lastName: string, email: string, password: string): Promise<void> {
 	const userCredential = await createUserWithEmailAndPassword(auth, email, password);
 	
-    // Set display name
-    await updateProfile(userCredential.user, {
-        displayName: `${firstName.trim()} ${lastName.trim()}`
-    });
+	// Set display name on Firebase Auth user
+	await updateProfile(userCredential.user, {
+		displayName: `${firstName.trim()} ${lastName.trim()}`
+	});
+
+	// Create user document in Firestore with profile data
+	await createUserDocument(userCredential.user);
     
-    // Automatically send verification email after account creation
+	// Automatically send verification email after account creation
 	await sendEmailVerification(userCredential.user);
 }
 
