@@ -8,7 +8,7 @@
 
 <div class="flex flex-col gap-3 mb-5">
     <h3 class="font-semibold">Account</h3>
-    <div class="flex flex-col bg-card border rounded-md">
+    <div class="flex flex-col bg-card border rounded-md overflow-hidden">
         <NameSection />
         <EmailSection />
         <PasswordSection />
@@ -18,7 +18,5 @@
 
 <div class="flex flex-col gap-3">
     <h3 class="font-semibold">Danger zone</h3>
-    <div class="flex flex-row rounded-md bg-red-50/70 dark:bg-red-950/70 border border-red-100 dark:border-red-900">
-        <DeleteAccountSection />
-    </div>
+    <DeleteAccountSection />
 </div>

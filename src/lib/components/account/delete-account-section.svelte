@@ -47,46 +47,45 @@
     }
 </script>
 
-<div class="flex flex-col border-b">
-    <div class="flex flex-row gap-4 p-4 w-full text-red-700 dark:text-red-300">
-        {#if !confirmDelete}
+<div class="flex flex-row rounded-md bg-red-50/70 dark:bg-red-950/70 border border-red-100 dark:border-red-900">
+    <div class="flex flex-col">
+        <div class="flex flex-row gap-4 p-4 w-full text-red-700 dark:text-red-300">
             <UserRoundX class="shrink-0" strokeWidth={1.5} />
             <div class="flex flex-col gap-1 text-sm">
-                <p class="font-medium">Delete account</p>
-                <p class="opacity-80">This permanently deletes your account and all associated data.</p>
-            </div>
-            <Button onclick={() => confirmDelete = true} variant="outline" size="sm" class="ml-auto" disabled={deleting}>Delete account</Button>
-        {:else}
-            <UserRoundX class="shrink-0" strokeWidth={1.5} />
-            <div class="flex flex-col gap-1 text-sm">
-                <p class="font-medium">Are you sure?</p>
-                <p class="opacity-80">This is irreversable and will permanently delete your account and all associated data!</p>
-            </div>
-            <div class="flex flex-row gap-2 ml-auto">
-                <Button onclick={handleCancel} variant="outline" size="sm" disabled={deleting}>Cancel</Button>
-                <Button onclick={handleDelete} variant="destructive" size="sm" disabled={deleting}>
-                    {#if deleting}
-                        <Spinner />
+                <p class="font-medium">
+                    {#if !confirmDelete}
+                        Delete account        
+                    {:else}
+                        Are you sure?
                     {/if}
-                    Confirm
-                </Button>
+                </p>
+                    <p class="opacity-80">This is irreversable and will permanently delete your account and all associated data.</p>
+                </div>
+            <Button onclick={() => confirmDelete = true} variant="destructive" size="sm" class="ml-auto" disabled={deleting || confirmDelete}>Delete account</Button>
+        </div>
+
+        {#if confirmDelete}
+            <div class="flex flex-col p-4 pl-14 max-w-sm gap-5">
+                <div class="flex flex-col gap-2.5">
+                    <Label>Enter your password to confirm</Label>
+                    <Input type="password" bind:value={password} disabled={deleting} />
+                </div>
+                {#if error}
+                    <div class="h-8 px-2 flex gap-2 items-center rounded-md text-sm text-red-50 bg-red-800">
+                        <CircleAlert class="size-4" />
+                        {errorMessage}
+                    </div>
+                {/if}
+                <div class="flex flex-row gap-2 mb-4">
+                    <Button onclick={handleDelete} variant="destructive" size="sm" disabled={deleting}>
+                        {#if deleting}
+                        <Spinner />
+                        {/if}
+                        Confirm
+                    </Button>
+                    <Button onclick={handleCancel} variant="outline" size="sm" disabled={deleting}>Cancel</Button>
+                </div>
             </div>
         {/if}
     </div>
-
-    {#if confirmDelete}
-        <div class="flex flex-col p-4 pl-14 max-w-sm gap-5">
-            <div class="flex flex-col gap-2.5">
-                <Label>Enter your password to confirm</Label>
-                <Input type="password" bind:value={password} disabled={deleting} />
-            </div>
-
-            {#if error}
-                <div class="h-8 px-2 flex gap-2 items-center rounded-md text-sm text-red-700 bg-red-50 border border-red-200">
-                    <CircleAlert class="size-4" />
-                    {errorMessage}
-                </div>
-            {/if}
-        </div>
-    {/if}
 </div>
