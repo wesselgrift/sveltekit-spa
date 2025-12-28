@@ -7,12 +7,15 @@
 import {
 	signInWithEmailAndPassword,
 	createUserWithEmailAndPassword,
-    updateProfile,
+	updateProfile,
 	sendPasswordResetEmail,
 	verifyPasswordResetCode as firebaseVerifyPasswordResetCode,
 	confirmPasswordReset as firebaseConfirmPasswordReset,
 	sendEmailVerification,
 	signOut,
+	reauthenticateWithCredential,
+	EmailAuthProvider,
+	verifyBeforeUpdateEmail,
 	type User
 } from 'firebase/auth';
 import { auth } from '../firebase/config';
@@ -71,4 +74,20 @@ export async function sendVerificationEmail(user: User): Promise<void> {
 // Throws Firebase auth errors that should be caught and displayed to the user.
 export async function logout(): Promise<void> {
 	await signOut(auth);
+}
+
+// Change the user's email address.
+// Requires the current password for re-authentication.
+// Sends a verification email to the new address - email only updates after verification.
+// Throws Firebase auth errors that should be caught and displayed to the user.
+export async function changeEmail(currentPassword: string, newEmail: string): Promise<void> {
+	const user = auth.currentUser;
+	if (!user || !user.email) throw new Error('No user signed in');
+
+	// Re-authenticate with current password
+	const credential = EmailAuthProvider.credential(user.email, currentPassword);
+	await reauthenticateWithCredential(user, credential);
+
+	// Send verification to new email (email only changes after verification)
+	await verifyBeforeUpdateEmail(user, newEmail);
 }

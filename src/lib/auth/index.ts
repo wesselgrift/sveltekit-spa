@@ -15,7 +15,8 @@ export {
 	verifyPasswordResetCode,
 	confirmPasswordReset,
 	sendVerificationEmail,
-	logout
+	logout,
+	changeEmail
 } from './actions';
 
 // Re-export guards

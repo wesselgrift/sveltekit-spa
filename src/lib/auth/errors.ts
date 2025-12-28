@@ -19,7 +19,8 @@ const ERROR_MESSAGES: Record<string, string> = {
 	'auth/invalid-action-code': 'This verification link is invalid or has expired.',
 	'auth/expired-action-code': 'This verification link has expired. Please request a new one.',
 	'auth/invalid-credential': 'Invalid email or password.',
-	'auth/operation-not-allowed': 'This sign-in method is not enabled.'
+	'auth/operation-not-allowed': 'This sign-in method is not enabled.',
+	'auth/requires-recent-login': 'Your session has expired. Please log out and log in again.'
 };
 
 // Convert Firebase auth errors to user-friendly error messages.
