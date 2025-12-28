@@ -7,8 +7,8 @@
 </script>
 
 <!-- Landing page hero section -->
-<div class="container mx-auto flex min-h-screen flex-col items-center justify-center px-4 py-12">
-	<div class="animate-fade-in-zoom mx-auto max-w-xl space-y-8 text-center">
+<div class="flex min-h-screen flex-col items-center justify-start md:justify-center px-4 py-12">
+	<div class="max-w-xl space-y-8 text-center">
 		<!-- Hero heading and description -->
 		<div class="flex flex-col gap-5">
 			<h1 class="text-4xl font-bold tracking-tight sm:text-6xl">
@@ -20,7 +20,7 @@
 		</div>
 
 		<!-- Call-to-action buttons -->
-		<div class="flex flex-col gap-4 sm:flex-row sm:justify-center">
+		<div class="flex flex-col md:flex-row gap-4 mx-auto max-w-xs justify-center">
 			<Button href="/signup" size="lg">
 				Create account
 			</Button>
@@ -30,7 +30,7 @@
 		</div>
 
 		<!-- GitHub repository link -->
-		<div class="pt-8">
+		<div class="pt-1 md:pt-4">
 			<a
 				href="https://github.com/wesselgrift/sveltekit-spa"
 				target="_blank"

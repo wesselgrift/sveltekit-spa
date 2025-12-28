@@ -10,7 +10,7 @@
 
 </script>
 
-<div class="flex min-h-screen items-center justify-center p-4">
+<div class="flex md:min-h-screen items-center justify-center p-4 pt-10 md:pt-4">
 	<div class="w-full max-w-sm flex flex-col gap-8">
         <Logo />
         <h1 class="text-2xl font-medium">Reset Password</h1>
