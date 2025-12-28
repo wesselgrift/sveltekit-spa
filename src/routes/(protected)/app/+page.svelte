@@ -3,49 +3,13 @@
 	 * Protected App Page
 	 */
 
-	import { authState } from '$lib/auth/state.svelte';
-	import { logout } from '$lib/auth/actions';
-	import { Button } from '$lib/components/ui/button';
-    import { Spinner } from "$lib/components/ui/spinner";
     import { AccountSettings } from '$lib/components/account'
-	import { goto } from '$app/navigation';
-    
-	let loggingOut = $state(false);
-
-
-	// Handle logout action
-	// Redirects to login page after successful logout
-	async function handleLogout(): Promise<void> {
-		loggingOut = true;
-		try {
-			await logout();
-			// Redirect to login page after logout
-			// The auth guard will handle this automatically, but explicit redirect is clearer
-			goto('/login');
-		} catch (error) {
-			console.error('Logout error:', error);
-			// Reset logging out state on error so user can try again
-			loggingOut = false;
-		}
-	}
-
-	// Get user display name (prefer displayName, fallback to email)
-	const userName = $derived(
-		authState.user?.displayName || authState.user?.email || 'User'
-	);
 </script>
 
 <div class="container mx-auto p-6 max-w-2xl">
-	<div class="flex flex-col gap-4">
-		<h1 class="text-2xl font-semibold">Hello, {userName}!</h1>
-		<AccountSettings />
-		<div class="flex gap-2">
-			<Button onclick={handleLogout} disabled={loggingOut} variant="outline">
-            {#if loggingOut}
-                <Spinner />
-            {/if}
-            Logout
-			</Button>
-		</div>
+	<div class="flex flex-col gap-2 mb-5">
+		<h1 class="text-2xl font-semibold">Welcome to Sveltekit SPA 👋</h1>
+        <p class="text-sm text-muted-foreground">Welcome in the (empty) app. Let's build something!</p>
 	</div>
+    <AccountSettings />
 </div>
