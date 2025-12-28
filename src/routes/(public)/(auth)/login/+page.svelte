@@ -10,7 +10,7 @@
 	import { page } from '$app/state';
 	import { authState } from '$lib/auth';
     import { Logo } from '$lib/components/ui/logo';
-    import LoginForm from '$lib/components/auth/login.svelte';
+    import { Login } from '$lib/components/auth';
 
 	// Get next param for redirect after login
 	const nextParam = $derived(page.url.searchParams.get('next'));
@@ -30,7 +30,7 @@
         <h1 class="text-2xl font-medium">Log in</h1>
 		
         <!-- Login form component -->
-        <LoginForm />
+        <Login />
 
         <!-- Links to other auth pages -->
         <div class="flex flex-col gap-2.5 text-center">

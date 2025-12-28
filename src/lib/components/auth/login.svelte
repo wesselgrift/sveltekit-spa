@@ -3,14 +3,9 @@
 	 * Login component
 	 * 
 	 * Handles email/password login.
-	 * Accepts optional redirect path via prop.
 	 */
 
-	import { goto } from '$app/navigation';
-	import {
-		loginWithEmail,
-		getAuthErrorMessage
-	} from '$lib/auth';
+	import { loginWithEmail, getAuthErrorMessage } from '$lib/auth';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';

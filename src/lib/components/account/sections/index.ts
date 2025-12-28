@@ -1,14 +1,5 @@
-
-import NameSection from "./name-section.svelte";
-import EmailSection from "./email-section.svelte";
-import PasswordSection from "./password-section.svelte";
-import LogoutSection from "./logout-section.svelte";
-import DeleteAccountSection from "./delete-account-section.svelte";
-
-export {
-	NameSection,
-    EmailSection,
-    PasswordSection,
-    LogoutSection,
-    DeleteAccountSection
-};
+export { default as NameSection } from "./name-section.svelte";
+export { default as EmailSection } from "./email-section.svelte";
+export { default as PasswordSection } from "./password-section.svelte";
+export { default as LogoutSection } from "./logout-section.svelte";
+export { default as DeleteAccountSection } from "./delete-account-section.svelte";
