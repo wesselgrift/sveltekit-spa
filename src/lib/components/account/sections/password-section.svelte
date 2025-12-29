@@ -1,6 +1,6 @@
 <script lang="ts">
 
-    /*
+    /**
      * Account section / password component
      * Allows for changing password
      * Requires current password for submit

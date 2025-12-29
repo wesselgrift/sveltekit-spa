@@ -1,6 +1,6 @@
 <script lang="ts">
 
-    /*
+    /**
      * Account section / log out component
      */
 

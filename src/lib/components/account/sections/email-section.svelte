@@ -1,6 +1,6 @@
 <script lang="ts">
 
-    /*
+    /**
      * Account section / email compoment
      * Show email and allows for email change
      * Requires user password to submit

@@ -1,6 +1,6 @@
 <script lang="ts">
     
-    /*
+    /**
      * Account section / delete account component
      * Allows for account deletetion
      * Also deletes Firestore records (see deleteAccount())
