@@ -16,6 +16,8 @@
 	 */
 	import './layout.css';
 	import favicon from '$lib/assets/favicon.svg';
+    import logoLight from '$lib/assets/logo.svg';
+	import logoDark from '$lib/assets/logo-dark.svg';
     import { onMount } from 'svelte';
     import { ModeWatcher, resetMode } from "mode-watcher";
 
@@ -27,7 +29,13 @@
 	let { children } = $props();
 </script>
 
-<svelte:head><link rel="icon" href={favicon} /></svelte:head>
+<svelte:head>
+    <link rel="icon" href={favicon} />
+
+	<!-- Preload logo assets for instant rendering -->
+	<link rel="preload" href={logoLight} as="image" />
+	<link rel="preload" href={logoDark} as="image" />
+</svelte:head>
 
 <ModeWatcher />
 {@render children()}
