@@ -122,19 +122,43 @@ PUBLIC_FIREBASE_APP_ID=your_app_id
 
 ### 4. Firestore Rules (important!)
 
-Set up basic security rules in your Firebase Console → Firestore → Rules:
+Your Firestore security rules must match exactly what your application reads and writes. Rules that are too strict will block legitimate operations, while rules that are too permissive create security vulnerabilities.
+
+Set up security rules in your Firebase Console → Firestore → Rules. The rules below match this boilerplate's user document structure (only `createdAt` field):
 
 ```javascript
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users can only read/write their own document
+    // User documents - users can only access their own document
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      // Allow read only if the requesting user matches the document ID
+      allow read: if request.auth != null && request.auth.uid == userId;
+      
+      // Allow create only for the user's own document with createdAt field
+      // IMPORTANT: This rule validates that only createdAt is provided
+      // If you change the document structure, update this rule accordingly
+      allow create: if request.auth != null 
+        && request.auth.uid == userId
+        && request.resource.data.keys().hasOnly(['createdAt']);
+      
+      // Allow delete only for the user's own document
+      allow delete: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Deny all other access by default
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
 ```
+
+**Key points:**
+- The `allow create` rule uses `hasOnly(['createdAt'])` to ensure only the `createdAt` field is written
+- If you modify the user document structure (e.g., add more fields), you must update the `hasOnly()` check
+- The `allow read` and `allow delete` rules ensure users can only access their own documents
+- Always test your rules in the Firebase Console Rules Playground before deploying
 
 ### 5. Run Development Server
 
@@ -201,7 +225,21 @@ export async function getUserPosts(userId: string): Promise<Post[]> {
 }
 ```
 
-2. Update your Firestore rules to allow access to the new collection.
+2. **Update your Firestore rules** to allow access to the new collection. This is critical — your rules must match what your code reads and writes:
+
+```javascript
+match /posts/{postId} {
+  // Example: Allow users to read all posts, but only create/update/delete their own
+  allow read: if request.auth != null;
+  allow create: if request.auth != null 
+    && request.resource.data.authorId == request.auth.uid
+    && request.resource.data.keys().hasAll(['title', 'content', 'authorId', 'createdAt']);
+  allow update, delete: if request.auth != null 
+    && resource.data.authorId == request.auth.uid;
+}
+```
+
+**Remember:** Always validate that your security rules match your actual data structure and access patterns. Test rules in the Firebase Console Rules Playground before deploying.
 
 ### Adding UI Components
 
