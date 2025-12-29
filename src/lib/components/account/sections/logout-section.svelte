@@ -1,7 +1,7 @@
 <script lang="ts">
     import { goto } from '$app/navigation';
     import { Button } from '$lib/components/ui/button';
-    import { KeyRound } from '@lucide/svelte';
+    import { DoorOpen } from '@lucide/svelte';
     import { logout } from '$lib/auth/actions';
     import { Spinner } from "$lib/components/ui/spinner";
 
@@ -25,7 +25,7 @@
 </script>
 
 <div class="flex flex-row gap-4 p-4 w-full">
-    <KeyRound class="shrink-0" strokeWidth={1.5} />
+    <DoorOpen class="shrink-0" strokeWidth={1.5} />
     <div class="flex flex-col gap-1 text-sm">
         <p class="font-medium">Log out</p>
         <p class="text-muted-foreground">See you later!</p>
