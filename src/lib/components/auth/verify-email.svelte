@@ -8,7 +8,6 @@
 	 */
 
 	import { authState, sendVerificationEmail, getAuthErrorMessage, logout } from '$lib/auth';
-	import { updateUserEmailVerified } from '$lib/firestore/users';
 	import { Button } from '$lib/components/ui/button';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { Alert, AlertTitle, AlertDescription } from '$lib/components/ui/alert';
@@ -69,8 +68,6 @@
 				// Check if verified after reload
 				if (authState.user.emailVerified) {
 					clearInterval(intervalId);
-					// Update Firestore user document with verified status
-					await updateUserEmailVerified(authState.user.uid);
 					onVerified();
 				}
 			} catch (err) {
@@ -99,8 +96,6 @@
 
 			// Check if verified after reload
 			if (authState.user.emailVerified) {
-				// Update Firestore user document with verified status
-				await updateUserEmailVerified(authState.user.uid);
 				checkFeedback = 'verified';
 				setTimeout(() => {
 					checkFeedback = null;
