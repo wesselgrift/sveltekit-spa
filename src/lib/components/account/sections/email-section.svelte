@@ -1,4 +1,11 @@
 <script lang="ts">
+
+    /*
+     * Account section / email compoment
+     * Show email and allows for email change
+     * Requires user password to submit
+     */
+
     import { authState } from '$lib/auth/state.svelte';
     import { changeEmail } from '$lib/auth/actions';
     import { getAuthErrorMessage } from '$lib/auth/errors';

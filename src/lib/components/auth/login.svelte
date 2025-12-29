@@ -18,6 +18,8 @@
 	let loading = $state(false);
 	let error = $state<string | null>(null);
 
+
+    // Handle login
 	async function handleEmailPasswordLogin(): Promise<void> {
 		if (!email || !password) {
 			error = 'Please enter both email and password';

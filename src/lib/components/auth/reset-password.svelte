@@ -20,6 +20,7 @@
 	let error = $state<string | null>(null);
 	let success = $state(false);
 
+    // Submit email for password reset
 	async function handleSubmit(): Promise<void> {
 		try {
 			loading = true;

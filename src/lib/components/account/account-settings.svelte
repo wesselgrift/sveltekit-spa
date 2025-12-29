@@ -1,4 +1,9 @@
 <script lang="ts">
+    /**
+     * Account setting component
+     * Loads subcomponents for each section: 
+     * name, email, password, logout and delete account
+     */
     import {
         NameSection,
         EmailSection,

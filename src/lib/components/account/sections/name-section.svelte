@@ -1,4 +1,11 @@
 <script lang="ts">
+
+    /*
+     * Account section / name component
+     * Show display name, split by first name and fill remainder into last name 
+     * Allows for name change
+     */
+
     import { authState } from '$lib/auth/state.svelte';
     import { updateProfile } from 'firebase/auth';
     import { splitDisplayName } from '$lib/helpers/name-helpers';

@@ -1,4 +1,9 @@
 <script lang="ts">
+
+    /*
+     * Account section / log out component
+     */
+
     import { goto } from '$app/navigation';
     import { Button } from '$lib/components/ui/button';
     import { DoorOpen } from '@lucide/svelte';

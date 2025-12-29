@@ -1,4 +1,11 @@
 <script lang="ts">
+    
+    /*
+     * Account section / delete account component
+     * Allows for account deletetion
+     * Also deletes Firestore records (see deleteAccount())
+     */
+
     import { goto } from '$app/navigation';
     import { Button } from '$lib/components/ui/button';
     import { Input } from '$lib/components/ui/input';

@@ -1,4 +1,11 @@
 <script lang="ts">
+
+    /*
+     * Account section / password component
+     * Allows for changing password
+     * Requires current password for submit
+     */
+
     import { changePassword, logout } from '$lib/auth/actions';
     import { goto } from '$app/navigation';
     import { getAuthErrorMessage } from '$lib/auth/errors';

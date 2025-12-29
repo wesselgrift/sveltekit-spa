@@ -136,6 +136,8 @@
 		}
 	}
 
+    // "Sign up with a different email" uses this logout function
+    // which allows for a new email to be used.
     async function handleLogout(): Promise<void> {
         try {
             await logout();
