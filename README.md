@@ -17,26 +17,16 @@ A minimal, production-ready boilerplate for building Single Page Applications wi
 
 ## 📦 What's Included
 
-### Authentication
-
-| Feature | Description |
-|---------|-------------|
-| Email/Password Login | Standard login with error handling |
-| User Registration | Signup with email verification |
-| Email Verification | Required before accessing protected routes |
-| Password Reset | Complete forgot password flow |
-| Account Settings | Change name, email, password |
-| Account Deletion | Self-service account removal |
 
 ### Route Structure
 
 ```
 src/routes/
-├── +layout.svelte          # Root layout (dark mode, favicon)
+├── +layout.svelte          # Root layout
 ├── +layout.ts              # SPA configuration (ssr=false)
 ├── (public)/               # Public routes (no auth required)
 │   ├── +page.svelte        # Landing page
-│   └── (auth)/             # Auth pages
+│   └── (auth)/             # Public auth pages
 │       ├── login/
 │       ├── signup/
 │       ├── verify-email/
@@ -84,6 +74,17 @@ src/lib/
     └── users.ts            # User document CRUD
 ```
 
+### Authentication
+
+| Feature | Description |
+|---------|-------------|
+| Email/Password Login | Standard login with error handling |
+| User Registration | Signup with email verification |
+| Email Verification | Required before accessing protected routes |
+| Password Reset | Complete forgot password flow |
+| Account Settings | Change name, email, password |
+| Account Deletion | Self-service account removal |
+
 ## 🚀 Quick Start
 
 ### Prerequisites
@@ -103,7 +104,7 @@ npm install
 
 1. Create a Firebase project at [console.firebase.google.com](https://console.firebase.google.com)
 2. Enable **Authentication** with Email/Password provider
-3. Enable **Cloud Firestore** database
+3. Enable **Firestore** database
 4. Get your Firebase config from Project Settings → General → Your apps
 
 ### 3. Environment Variables
@@ -119,7 +120,7 @@ PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
 PUBLIC_FIREBASE_APP_ID=your_app_id
 ```
 
-### 4. Firestore Rules
+### 4. Firestore Rules (important!)
 
 Set up basic security rules in your Firebase Console → Firestore → Rules:
 
@@ -141,7 +142,6 @@ service cloud.firestore {
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173) to see your app.
 
 ## 🏗️ Building Upon This
 
@@ -241,16 +241,6 @@ This SPA builds to static files and can be deployed anywhere static hosting is s
 
 Build output is in the `build/` directory. The `200.html` fallback handles client-side routing.
 
-### Firebase Hosting Example
-
-```bash
-npm install -g firebase-tools
-firebase login
-firebase init hosting  # Select your project, set public dir to "build"
-npm run build
-firebase deploy
-```
-
 ## 📚 Key Patterns
 
 ### Auth State Access
@@ -301,10 +291,3 @@ try {
 }
 ```
 
-## 🤝 Contributing
-
-Contributions are welcome! Please open an issue or submit a pull request.
-
-## 📄 License
-
-MIT License — feel free to use this for any project.
