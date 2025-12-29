@@ -1,7 +1,10 @@
 <script lang="ts">
-	/**
-	 * Public Homepage
-     **/
+    /**
+     * Public Homepage
+     * 
+     * Landing page with hero section and navigation to signup/login.
+     * Publicly accessible, no auth required.
+     */
 
     import { Button } from "$lib/components/ui/button"
 </script>

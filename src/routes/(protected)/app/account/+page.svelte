@@ -1,7 +1,10 @@
 <script lang="ts">
-	/**
-	 * Simple account page
-	 */
+    /**
+     * Account Settings Page
+     * 
+     * User account management page with settings sections.
+     * Protected by (protected) layout guard.
+     */
 
     import { AccountSettings } from '$lib/components/account'
 </script>

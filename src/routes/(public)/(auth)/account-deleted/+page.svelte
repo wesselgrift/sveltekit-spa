@@ -1,4 +1,11 @@
 <script lang="ts">
+    /**
+     * Account Deleted Page
+     * 
+     * Confirmation page shown after account deletion.
+     * Publicly accessible, provides link back to homepage.
+     */
+    
     import { Shredder } from '@lucide/svelte';
 </script>
 

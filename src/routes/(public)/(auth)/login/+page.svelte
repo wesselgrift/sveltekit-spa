@@ -1,10 +1,10 @@
 <script lang="ts">
 	/**
-	 * Login Page
-	 * 
-	 * Login page accessible at /login.
-	 * Handles redirect to /app/* with nextParam after login
-	 */
+     * Login Page
+     * 
+     * Redirects authenticated users (verified to /app, unverified to /verify-email).
+     * Uses Login component for authentication with next param preservation.
+     */
 
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
@@ -54,7 +54,7 @@
     {:else}
     	<!-- Show loading spinner while checking auth state -->
 		<div class="flex items-center justify-center">
-			<Spinner class="size-8" />
+			<Spinner class="size-6" />
 		</div>
 	{/if}
 </div>

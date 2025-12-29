@@ -1,9 +1,10 @@
 <script lang="ts">
-	/**
-	 * Reset Password Page
-	 * 
-	 * Handles password reset email requests with ResetPassword component
-	 */
+    /**
+     * Reset Password Page
+     * 
+     * Handles password reset email requests using ResetPassword component.
+     * Publicly accessible, no auth required.
+     */
 
     import { Logo } from '$lib/components/ui/logo';
     import { ResetPassword as ResetPasswordForm } from '$lib/components/auth';

@@ -1,14 +1,10 @@
 <script lang="ts">
-	/**
-	 * Public Route Layout
-	 * 
-	 * Simple layout wrapper for public routes (homepage and auth pages).
-	 * No authentication checks - all routes under (public) are accessible without auth.
-	 * 
-	 * Will contain:
-	 * - Simple wrapper that renders children
-	 * - No auth guards or redirects
-	 */
+    /**
+     * Public Route Layout
+     * 
+     * Simple wrapper for public routes (homepage and auth pages).
+     * No auth guards or restrictions.
+     */
 
 	let { children } = $props();
 </script>

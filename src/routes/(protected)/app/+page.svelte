@@ -1,7 +1,11 @@
 <script lang="ts">
-	/**
-	 * Protected App Page
-	 */
+    /**
+     * Protected App Homepage
+     * 
+     * Main dashboard page accessible only to authenticated, verified users.
+     * Protected by (protected) layout guard.
+     */
+    
     import { Button } from '$lib/components/ui/button';
     import { IdCardLanyard } from '@lucide/svelte';
 </script>

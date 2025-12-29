@@ -1,9 +1,11 @@
 <script lang="ts">
-	/**
-	 * Verify Email Page
-	 * 
-	 * Handles email verification through component
-	 */
+    /**
+     * Verify Email Page
+     * 
+     * Redirects unauthenticated users to login and verified users to their destination.
+     * Uses VerifyEmail component for email verification with callback-based navigation.
+     */
+
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { authState } from '$lib/auth';

@@ -1,7 +1,11 @@
 <script lang="ts">
-	/**
-	 * Protected Route Layout
-	 */
+    /**
+     * Protected Route Layout
+     * 
+     * Guards authenticated routes using useProtectedRoute. Shows loading spinner
+     * during auth check, redirects unauthenticated users, renders children only
+     * when user is authenticated and email verified.
+     */
 
 	import { useProtectedRoute } from '$lib/auth/guards';
     import { Spinner } from '$lib/components/ui/spinner';

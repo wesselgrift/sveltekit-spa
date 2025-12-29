@@ -1,11 +1,10 @@
 <script lang="ts">
-	/**
-	 * Signup Page
-	 * 
-	 * Signup page accessible at /signup.
-	 * Handles user registration with email and password.
-	 * Redirect decisions live in this page; the form component only reports success.
-	 */
+    /**
+     * Signup Page
+     * 
+     * Redirects authenticated users (verified to /app, unverified to /verify-email).
+     * Uses Signup component for registration, redirects to verify-email on success.
+     */
 
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
@@ -58,7 +57,7 @@
     {:else}
     	<!-- Show loading spinner while checking auth state -->
 		<div class="flex items-center justify-center">
-			<Spinner class="size-8" />
+			<Spinner class="size-6" />
 		</div>
 	{/if}
 </div>
