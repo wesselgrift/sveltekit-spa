@@ -5,7 +5,7 @@
  * User documents are stored in the `users` collection with the UID as document ID.
  */
 
-import { doc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import type { User } from 'firebase/auth';
 
@@ -41,5 +41,12 @@ export async function updateUserEmailVerified(uid: string): Promise<void> {
 	await updateDoc(userRef, {
 		emailVerified: true
 	});
+}
+
+// Deletes the user's document from Firestore.
+// Should be called before deleting the Firebase Auth user to ensure cleanup.
+export async function deleteUserDocument(uid: string): Promise<void> {
+	const userRef = doc(db, 'users', uid);
+	await deleteDoc(userRef);
 }
 

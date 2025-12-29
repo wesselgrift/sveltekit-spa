@@ -21,7 +21,7 @@ import {
 	type User
 } from 'firebase/auth';
 import { auth } from '../firebase/config';
-import { createUserDocument } from '../firestore/users';
+import { createUserDocument, deleteUserDocument } from '../firestore/users';
 
 // Sign in with email and password.
 // Throws Firebase auth errors that should be caught and displayed to the user.
@@ -118,6 +118,7 @@ export async function changePassword(currentPassword: string, newPassword: strin
 // Delete the current user's account permanently.
 // Requires the current password for re-authentication.
 // This action is irreversible and will delete all user data.
+// Deletes Firestore document first, then the Auth user.
 // Throws Firebase auth errors that should be caught and displayed to the user.
 export async function deleteAccount(currentPassword: string): Promise<void> {
 	const user = auth.currentUser;
@@ -127,6 +128,9 @@ export async function deleteAccount(currentPassword: string): Promise<void> {
 	const credential = EmailAuthProvider.credential(user.email, currentPassword);
 	await reauthenticateWithCredential(user, credential);
 
-	// Delete the user account
+	// Delete the user's Firestore document first (while still authenticated)
+	await deleteUserDocument(user.uid);
+
+	// Delete the Firebase Auth user
 	await deleteUser(user);
 }
