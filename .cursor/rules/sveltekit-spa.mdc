@@ -32,7 +32,7 @@ You are an expert SvelteKit engineer. Follow these rules ALWAYS when generating 
 ============================================================
 2) Runes + state management
 ============================================================
-- Prefer Runes ($state, $derived, $effect) over legacy writable stores.
+- Use Runes ($state, $derived, $effect) and avoid legacy writable stores.
 - Avoid module-level side effects that register listeners on import (especially auth listeners). Use an explicit init function called once (e.g., from root layout onMount) or idempotent subscription guards.
 - Keep state minimal:
   - Put global app/auth state in src/lib (e.g., src/lib/auth/state.svelte.ts).
@@ -90,7 +90,23 @@ You are an expert SvelteKit engineer. Follow these rules ALWAYS when generating 
   - Use Alert components for page-level errors.
 
 ============================================================
-6) Firebase Auth rules
+6) Forms (Zod + superforms + shadcn)
+============================================================
+This project uses sveltekit-superforms with Zod validation and shadcn-svelte form components (formsnap).
+
+- Define Zod schemas in `*-schemas.ts` files next to forms. Export both schema and type (`type MySchema = typeof mySchema`).
+- Use `zod4` adapter from `sveltekit-superforms/adapters` with `SPA: true` mode.
+- Initialize: `superForm(defaults(zod4(schema)), { validators: zod4(schema), SPA: true, onUpdate: ... })`
+- Destructure `{ form: formData, enhance }` from superForm.
+- Form state: keep `serverError`, `loading`, and optionally `success` as separate `$state` variables.
+- Markup pattern: `Form.Field` → `Form.Control` with `{#snippet children({ props })}` → spread `{...props}` on Input → `Form.FieldErrors`.
+- Always `bind:value={$formData.fieldName}` (note `$` prefix) and `disabled={loading}` on inputs.
+- Use `Form.Button` for submit with `Spinner` inside when loading.
+- Show server errors (API/Firebase) via Alert, separate from field validation errors.
+- Reference existing forms in `src/lib/components/auth/` and `src/lib/components/account/sections/` for patterns.
+
+============================================================
+7) Firebase Auth rules
 ============================================================
 - Auth state must include:
   - `user: User | null`
@@ -108,7 +124,7 @@ You are an expert SvelteKit engineer. Follow these rules ALWAYS when generating 
 - Provide user-friendly error messages by mapping Firebase error codes to short messages.
 
 ============================================================
-7) Firestore rules
+8) Firestore rules
 ============================================================
 - Prefer typed collection/document helpers:
   - use Firestore data converters OR a typed mapping layer.
@@ -126,7 +142,7 @@ You are an expert SvelteKit engineer. Follow these rules ALWAYS when generating 
 - Do not leak Firestore instance initialization across modules; keep a single initialization path.
 
 ============================================================
-8) UX defaults (non-negotiable)
+9) UX defaults (non-negotiable)
 ============================================================
 - Every async operation MUST include:
   - a visible loading state (spinner/skeleton/progress)
@@ -148,7 +164,7 @@ You are an expert SvelteKit engineer. Follow these rules ALWAYS when generating 
 - Never block public pages behind global auth loading; gate only protected sections.
 
 ============================================================
-9) Accessibility + semantics
+10) Accessibility + semantics
 ============================================================
 - Use semantic HTML first (button for actions, a for navigation).
 - Inputs must have associated labels (prefer shadcn Label).
@@ -159,7 +175,7 @@ You are an expert SvelteKit engineer. Follow these rules ALWAYS when generating 
 - Color is never the only signal for error/success.
 
 ============================================================
-10) Comments & explainability (required)
+11) Comments & explainability (required)
 ============================================================
 - Add clear, descriptive comments for non-trivial logic so the code is easy to follow.
 - Comment rules:
@@ -172,7 +188,7 @@ You are an expert SvelteKit engineer. Follow these rules ALWAYS when generating 
 - Do NOT use JSDocs comments
 
 ============================================================
-11) Error handling + resilience
+12) Error handling + resilience
 ============================================================
 - Catch and surface errors; never silently fail.
 - Log unexpected errors to console in dev; keep user messages short and friendly.
@@ -181,7 +197,7 @@ You are an expert SvelteKit engineer. Follow these rules ALWAYS when generating 
 - Handle offline states gracefully for Firestore operations where possible (show “You appear offline”).
 
 ============================================================
-12) Performance + reactivity
+13) Performance + reactivity
 ============================================================
 - Avoid unnecessary reactive loops:
   - do not put `goto()` or network calls inside $effect without strong guards.
@@ -190,7 +206,7 @@ You are an expert SvelteKit engineer. Follow these rules ALWAYS when generating 
 - Use skeletons for list loading; spinners for short actions; never show blank screens.
 
 ============================================================
-13) Code style
+14) Code style
 ============================================================
 - Prefer early returns.
 - Keep functions small (< ~40 lines) when feasible.
@@ -199,11 +215,10 @@ You are an expert SvelteKit engineer. Follow these rules ALWAYS when generating 
 - Use consistent formatting and naming already present in repo.
 
 ============================================================
-14) When you (the assistant) are uncertain
+15) When you (the assistant) are uncertain
 ============================================================
-- Make a reasonable assumption and proceed.
-- If a choice affects architecture (e.g., SSR vs SPA, route paths), pick the simplest safe default and keep it consistent.
-- Never ask multiple questions; at most one short question at the end if absolutely required.
+- Ask the user for information or input
+- If a choice affects architecture pick the simplest safe default and keep it consistent.
 
 END RULES
 
