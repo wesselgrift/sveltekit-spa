@@ -1,80 +1,75 @@
 <script lang="ts">
 
-    /**
-     * Account section / password component
-     * Allows for changing password
-     * Requires current password for submit
-     */
+	/**
+	 * Account section / password component
+	 * Allows for changing password
+	 * Requires current password for submit
+	 */
 
-    import { changePassword, logout } from '$lib/auth/actions';
-    import { goto } from '$app/navigation';
-    import { getAuthErrorMessage } from '$lib/auth/errors';
-    import { Button } from '$lib/components/ui/button';
-    import { Input } from '$lib/components/ui/input';
-    import { Label } from '$lib/components/ui/label';
-    import { Spinner } from '$lib/components/ui/spinner';
-    import { Lock, Check, CircleAlert } from '@lucide/svelte';
+	import { changePassword, logout } from '$lib/auth/actions';
+	import { goto } from '$app/navigation';
+	import { getAuthErrorMessage } from '$lib/auth/errors';
+	import * as Form from '$lib/components/ui/form';
+	import { Input } from '$lib/components/ui/input';
+	import { Button } from '$lib/components/ui/button';
+	import { Spinner } from '$lib/components/ui/spinner';
+	import { Lock, Check, CircleAlert } from '@lucide/svelte';
+	import { defaults, superForm } from 'sveltekit-superforms';
+	import { zod4 } from 'sveltekit-superforms/adapters';
+	import { changePasswordSchema } from './account-schemas';
 
-    let showForm = $state(false);
-    let currentPassword = $state('');
-    let newPassword = $state('');
-    let loading = $state(false);
-    let success = $state(false);
-    let error = $state(false);
-    let errorMessage = $state('');
+	let showForm = $state(false);
+	let loading = $state(false);
+	let success = $state(false);
+	let serverError = $state<string | null>(null);
 
-    // Open the edit form and reset fields
-    function openEditForm(): void {
-        currentPassword = '';
-        newPassword = '';
-        showForm = true;
-    }
+	const form = superForm(defaults(zod4(changePasswordSchema)), {
+		validators: zod4(changePasswordSchema),
+		SPA: true,
+		onUpdate: async ({ form: f }) => {
+			if (f.valid) {
+				loading = true;
+				serverError = null;
+				success = false;
 
-    // Close the edit form and reset state
-    function closeEditForm(): void {
-        showForm = false;
-        success = false;
-        error = false;
-        errorMessage = '';
-    }
+				try {
+					await changePassword(f.data.currentPassword, f.data.newPassword);
 
-    // Save the new password
-    async function savePassword(): Promise<void> {
-        // Basic validation
-        if (!currentPassword) {
-            error = true;
-            errorMessage = 'Please enter your current password';
-            return;
-        }
-        if (!newPassword) {
-            error = true;
-            errorMessage = 'Please enter a new password';
-            return;
-        }
+					success = true;
 
-        loading = true;
-        error = false;
-        success = false;
+					// Close form after a delay to show success message
+					setTimeout(() => {
+						closeEditForm();
+						handleLogout();
+					}, 3000);
+				} catch (err) {
+					serverError = getAuthErrorMessage(err);
+				} finally {
+					loading = false;
+				}
+			}
+		},
+	});
 
-        try {
-            await changePassword(currentPassword, newPassword);
+	const { form: formData, enhance } = form;
 
-            success = true;
+	// Open the edit form and reset fields
+	function openEditForm(): void {
+		$formData.currentPassword = '';
+		$formData.newPassword = '';
+		success = false;
+		serverError = null;
+		showForm = true;
+	}
 
-            // Close form after a delay to show success message
-            setTimeout(() => {
-                closeEditForm();
-                handleLogout();
-            }, 3000);
-        } catch (err) {
-            error = true;
-            errorMessage = getAuthErrorMessage(err);
-        } finally {
-            loading = false;
-        }
-    }
+	// Close the edit form and reset state
+	function closeEditForm(): void {
+		showForm = false;
+		success = false;
+		serverError = null;
+	}
 
-    async function handleLogout(): Promise<void> {
+	async function handleLogout(): Promise<void> {
 		try {
 			await logout();
 			// Redirect to login page after logout
@@ -88,49 +83,59 @@
 </script>
 
 <div class="flex flex-col border-b">
-    <div class="flex flex-row gap-4 p-4 w-full">
-        <Lock class="shrink-0" strokeWidth={1.5} />
-        <div class="flex flex-col gap-1 text-sm">
-            <p class="font-medium">Password</p>
-            <p class="text-muted-foreground">•••••••••••••</p>
-        </div>
-        <Button onclick={openEditForm} variant="outline" size="sm" class="ml-auto" disabled={showForm}>Change password</Button>
-    </div>
+	<div class="flex flex-row gap-4 p-4 w-full">
+		<Lock class="shrink-0" strokeWidth={1.5} />
+		<div class="flex flex-col gap-1 text-sm">
+			<p class="font-medium">Password</p>
+			<p class="text-muted-foreground">•••••••••••••</p>
+		</div>
+		<Button onclick={openEditForm} variant="outline" size="sm" class="ml-auto" disabled={showForm}>Change password</Button>
+	</div>
 
-    {#if showForm}
-        <div class="flex flex-col p-4 pl-14 max-w-sm gap-5">
-            <div class="flex flex-col gap-2.5">
-                <Label>Current Password</Label>
-                <Input type="password" bind:value={currentPassword} disabled={loading} />
-            </div>
-            <div class="flex flex-col gap-2.5">
-                <Label>New Password</Label>
-                <Input type="password" bind:value={newPassword} disabled={loading} />
-            </div>
+	{#if showForm}
+		<form method="POST" use:enhance class="flex flex-col p-4 pl-14 max-w-sm gap-5">
+			<Form.Field {form} name="currentPassword">
+				<Form.Control>
+					{#snippet children({ props })}
+						<Form.Label>Current Password</Form.Label>
+						<Input {...props} type="password" bind:value={$formData.currentPassword} disabled={loading} />
+					{/snippet}
+				</Form.Control>
+				<Form.FieldErrors />
+			</Form.Field>
+			<Form.Field {form} name="newPassword">
+				<Form.Control>
+					{#snippet children({ props })}
+						<Form.Label>New Password</Form.Label>
+						<Input {...props} type="password" bind:value={$formData.newPassword} disabled={loading} />
+					{/snippet}
+				</Form.Control>
+				<Form.FieldErrors />
+			</Form.Field>
 
-            {#if error}
-                <div class="h-8 px-2 flex gap-2 items-center rounded-md text-sm border text-red-700 bg-red-50 border-red-200 dark:text-red-50 dark:bg-red-700 dark:border-red-600">
-                    <CircleAlert class="size-4" />
-                    {errorMessage}
-                </div>
-            {/if}
+			{#if serverError}
+				<div class="h-8 px-2 flex gap-2 items-center rounded-md text-sm border text-red-700 bg-red-50 border-red-200 dark:text-red-50 dark:bg-red-700 dark:border-red-600">
+					<CircleAlert class="size-4" />
+					{serverError}
+				</div>
+			{/if}
 
-            <div class="flex flex-row gap-2 mb-4">
-                {#if success}
-                    <div class="h-auto py-2 px-2 flex gap-2 items-start rounded-md text-sm border text-emerald-700 bg-emerald-50 border-emerald-100 dark:text-emerald-200 dark:bg-emerald-700 dark:border-emerald-600">
-                        <Check class="size-4 mt-0.5 shrink-0" />
-                        Password changed successfully. Please log in with your new password.
-                    </div>
-                {:else}
-                    <Button onclick={savePassword} variant="default" size="sm" disabled={loading}>
-                        {#if loading}
-                            <Spinner />
-                        {/if}
-                        Save
-                    </Button>
-                    <Button onclick={closeEditForm} variant="outline" size="sm" disabled={loading}>Cancel</Button>
-                {/if}
-            </div>
-        </div>
-    {/if}
+			<div class="flex flex-row gap-2 mb-4">
+				{#if success}
+					<div class="h-auto py-2 px-2 flex gap-2 items-start rounded-md text-sm border text-emerald-700 bg-emerald-50 border-emerald-100 dark:text-emerald-200 dark:bg-emerald-700 dark:border-emerald-600">
+						<Check class="size-4 mt-0.5 shrink-0" />
+						Password changed successfully. Please log in with your new password.
+					</div>
+				{:else}
+					<Form.Button variant="default" size="sm" disabled={loading}>
+						{#if loading}
+							<Spinner />
+						{/if}
+						Save
+					</Form.Button>
+					<Button type="button" onclick={closeEditForm} variant="outline" size="sm" disabled={loading}>Cancel</Button>
+				{/if}
+			</div>
+		</form>
+	{/if}
 </div>
