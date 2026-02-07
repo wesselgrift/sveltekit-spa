@@ -112,6 +112,7 @@ npm install
 Create a `.env` file in the project root:
 
 ```env
+# Required: Firebase Client Configuration
 PUBLIC_FIREBASE_API_KEY=your_api_key
 PUBLIC_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
 PUBLIC_FIREBASE_PROJECT_ID=your_project_id
@@ -119,6 +120,8 @@ PUBLIC_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
 PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
 PUBLIC_FIREBASE_APP_ID=your_app_id
 ```
+
+**Note:** Copy `.env.example` to `.env` and fill in your values. The `PUBLIC_` prefix makes variables available to client-side code. Variables without the prefix are server-only.
 
 ### 4. Firestore Rules (important!)
 
