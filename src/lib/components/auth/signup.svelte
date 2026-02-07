@@ -8,11 +8,13 @@
 	 */
 
 	import { signupWithEmail, getAuthErrorMessage } from '$lib/auth';
-	import { Button } from '$lib/components/ui/button';
+	import * as Form from '$lib/components/ui/form';
 	import { Input } from '$lib/components/ui/input';
-	import { Label } from '$lib/components/ui/label';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { Alert, AlertTitle, AlertDescription } from '$lib/components/ui/alert';
+	import { defaults, superForm } from 'sveltekit-superforms';
+	import { zod4 } from 'sveltekit-superforms/adapters';
+	import { signupSchema } from './auth-schemas';
 
 	const noop = () => {};
 
@@ -21,90 +23,84 @@
 		onSignupSuccess?: (email: string) => void;
 	}>();
 
-	// Form state
-	let email = $state('');
-	let password = $state('');
-	let firstName = $state('');
-	let lastName = $state('');
+	// Server error state (Firebase auth errors, not field validation)
+	let serverError = $state<string | null>(null);
 	let loading = $state(false);
-	let error = $state<string | null>(null);
 
-	// Submit handler stays UI-focused; navigation happens in the parent page.
-	async function handleSubmit(): Promise<void> {
-		try {
-			loading = true;
-			error = null;
-			await signupWithEmail(firstName, lastName, email, password);
+	const form = superForm(defaults(zod4(signupSchema)), {
+		validators: zod4(signupSchema),
+		SPA: true,
+		onUpdate: async ({ form: f }) => {
+			if (f.valid) {
+				try {
+					loading = true;
+					serverError = null;
+					await signupWithEmail(f.data.firstName, f.data.lastName, f.data.email, f.data.password);
+					onSignupSuccess(f.data.email);
+				} catch (err) {
+					serverError = getAuthErrorMessage(err);
+				} finally {
+					loading = false;
+				}
+			}
+		},
+	});
 
-			onSignupSuccess(email);
-		} catch (err) {
-			error = getAuthErrorMessage(err);
-		} finally {
-			loading = false;
-		}
-	}
+	const { form: formData, enhance } = form;
 </script>
 
 <div class="flex flex-col gap-5">
-    {#if error}
-        <Alert variant="destructive">
-            <AlertTitle>Whoops!</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
-        </Alert>
-    {/if}
+	{#if serverError}
+		<Alert variant="destructive">
+			<AlertTitle>Whoops!</AlertTitle>
+			<AlertDescription>{serverError}</AlertDescription>
+		</Alert>
+	{/if}
 
-    <form onsubmit={(e) => { e.preventDefault(); handleSubmit(); }} class="flex flex-col gap-5">
-        <div class="flex flex-row gap-3">
-            <div class="flex flex-col gap-2.5 w-full">
-                <Label for="firstName">First name</Label>
-                <Input
-                    id="firstName"
-                    type="text"
-                    bind:value={firstName}
-                    required
-                    disabled={loading}
-                />
-            </div>
-            <div class="flex flex-col gap-2.5 w-full">
-                <Label for="firstName">Last name</Label>
-                <Input
-                    id="lastName"
-                    type="text"
-                    bind:value={lastName}
-                    required
-                    disabled={loading}
-                />
-            </div>
-        </div>
-        <div class="flex flex-col gap-2.5">
-            <Label for="email">Email</Label>
-            <Input
-                id="email"
-                type="email"
-                bind:value={email}
-                required
-                disabled={loading}
-            />
-        </div>
-        <div class="flex flex-col gap-2.5">
-            <Label for="password">Password</Label>
-            <Input
-                id="password"
-                type="password"
-                bind:value={password}
-                required
-                disabled={loading}
-                minlength={6}
-            />
-            {#if password.length > 0 && password.length < 6}
-                <p class="text-xs text-muted-foreground">Password must be at least 6 characters</p>
-            {/if}
-        </div>
-        <Button type="submit" disabled={loading} class="w-full">
-            {#if loading}
-                <Spinner />
-            {/if}
-            Continue
-        </Button>
-    </form>
+	<form method="POST" use:enhance class="flex flex-col gap-5">
+		<div class="flex flex-row gap-3">
+			<Form.Field {form} name="firstName" class="w-full">
+				<Form.Control>
+					{#snippet children({ props })}
+						<Form.Label>First name</Form.Label>
+						<Input {...props} bind:value={$formData.firstName} disabled={loading} />
+					{/snippet}
+				</Form.Control>
+				<Form.FieldErrors />
+			</Form.Field>
+			<Form.Field {form} name="lastName" class="w-full">
+				<Form.Control>
+					{#snippet children({ props })}
+						<Form.Label>Last name</Form.Label>
+						<Input {...props} bind:value={$formData.lastName} disabled={loading} />
+					{/snippet}
+				</Form.Control>
+				<Form.FieldErrors />
+			</Form.Field>
+		</div>
+		<Form.Field {form} name="email">
+			<Form.Control>
+				{#snippet children({ props })}
+					<Form.Label>Email</Form.Label>
+					<Input {...props} type="email" bind:value={$formData.email} disabled={loading} />
+				{/snippet}
+			</Form.Control>
+			<Form.FieldErrors />
+		</Form.Field>
+		<Form.Field {form} name="password">
+			<Form.Control>
+				{#snippet children({ props })}
+					<Form.Label>Password</Form.Label>
+					<Input {...props} type="password" bind:value={$formData.password} disabled={loading} />
+				{/snippet}
+			</Form.Control>
+			<Form.FieldErrors />
+		</Form.Field>
+		<Form.Button disabled={loading} class="w-full">
+			{#if loading}
+				<Spinner />
+			{/if}
+			Continue
+		</Form.Button>
+	</form>
 </div>

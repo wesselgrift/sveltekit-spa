@@ -8,10 +8,16 @@ const config = {
 	preprocess: vitePreprocess(),
 
 	kit: { 
-        adapter: adapter({
-            fallback: '200.html'
-        }) 
-    }
+		adapter: adapter({
+			// default options are shown. On some platforms
+			// these options are set automatically — see below
+			pages: 'build',
+			assets: 'build',
+			fallback: '200.html',
+			precompress: false,
+			strict: true
+		})
+	}
 };
 
 export default config;
