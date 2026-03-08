@@ -57,16 +57,17 @@
 		// Poll for verification status every 3 seconds
 		// This allows auto-redirect when user verifies email in another tab
 		const intervalId = setInterval(async () => {
-			if (!authState.user) {
+			const currentUser = authState.user;
+			if (!currentUser) {
 				clearInterval(intervalId);
 				return;
 			}
 
 			try {
 				// Reload user to get latest emailVerified status
-				await authState.user.reload();
+				await currentUser.reload();
 				// Check if verified after reload
-				if (authState.user.emailVerified) {
+				if (currentUser.emailVerified) {
 					clearInterval(intervalId);
 					onVerified();
 				}
@@ -84,7 +85,8 @@
 
 	// Manual refresh button handler
 	async function handleCheckVerification(): Promise<void> {
-		if (!authState.user) {
+		const currentUser = authState.user;
+		if (!currentUser) {
 			return;
 		}
 
@@ -92,10 +94,10 @@
 			checkingVerification = true;
 			error = null;
 			// Reload user to get latest emailVerified status
-			await authState.user.reload();
+			await currentUser.reload();
 
 			// Check if verified after reload
-			if (authState.user.emailVerified) {
+			if (currentUser.emailVerified) {
 				checkFeedback = 'verified';
 				setTimeout(() => {
 					checkFeedback = null;

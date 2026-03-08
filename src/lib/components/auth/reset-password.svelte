@@ -33,6 +33,7 @@
                     loading = true;
                     serverError = null;
                     await resetPassword(f.data.email);
+                    success = true;
                 } catch (err) {
                     serverError = getAuthErrorMessage(err);
                 } finally {
