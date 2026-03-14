@@ -35,6 +35,8 @@
 	const form = superForm(defaults(zod4(nameSchema)), {
 		validators: zod4(nameSchema),
 		SPA: true,
+		// Keep submitted values visible until our delayed close runs.
+		resetForm: false,
 		onUpdate: async ({ form: f }) => {
 			if (f.valid) {
 				if (!authState.user) return;

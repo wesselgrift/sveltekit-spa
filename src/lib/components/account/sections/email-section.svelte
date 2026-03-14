@@ -29,6 +29,8 @@
 	const form = superForm(defaults(zod4(changeEmailSchema)), {
 		validators: zod4(changeEmailSchema),
 		SPA: true,
+		// Keep submitted values visible until our delayed close runs.
+		resetForm: false,
 		onUpdate: async ({ form: f }) => {
 			if (f.valid) {
 				loading = true;

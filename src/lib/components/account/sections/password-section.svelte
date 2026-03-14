@@ -26,6 +26,8 @@
 	const form = superForm(defaults(zod4(changePasswordSchema)), {
 		validators: zod4(changePasswordSchema),
 		SPA: true,
+		// Keep submitted values visible until our delayed close runs.
+		resetForm: false,
 		onUpdate: async ({ form: f }) => {
 			if (f.valid) {
 				loading = true;
