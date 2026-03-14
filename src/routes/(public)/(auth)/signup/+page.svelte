@@ -41,7 +41,10 @@
 
 			// In this signup + superforms flow, goto() can resolve without committing a route change.
 			// Use a hard navigation here so post-signup redirect to verify-email is always reliable.
-			window.location.assign(redirectTarget);
+			// A tiny delay gives the loading UI one paint cycle so the spinner visibly animates.
+			setTimeout(() => {
+				window.location.assign(redirectTarget);
+			}, 300);
 			return;
 		}
 
