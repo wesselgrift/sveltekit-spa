@@ -92,7 +92,7 @@ export async function signupWithEmail(firstName: string, lastName: string, email
 // Throws Supabase auth errors that should be caught and displayed to the user.
 export async function resetPassword(email: string): Promise<void> {
 	const { error } = await supabase.auth.resetPasswordForEmail(email, {
-		redirectTo: getRedirectUrl('/reset-password/')
+		redirectTo: getRedirectUrl('/set-new-password/')
 	});
 
 	if (error) {
@@ -132,6 +132,25 @@ export async function confirmPasswordReset(code: string, newPassword: string): P
 	});
 	if (updateError) {
 		throw updateError;
+	}
+}
+
+// Confirm password reset when Supabase already established a recovery session
+// from a hash-based email link (e.g. #access_token=...&type=recovery).
+export async function completeRecoveredPasswordReset(newPassword: string): Promise<void> {
+	const { data, error: sessionError } = await supabase.auth.getSession();
+	if (sessionError) {
+		throw sessionError;
+	}
+	if (!data.session) {
+		throw new Error('Password recovery session is missing. Please request a new reset link.');
+	}
+
+	const { error } = await supabase.auth.updateUser({
+		password: newPassword
+	});
+	if (error) {
+		throw error;
 	}
 }
 

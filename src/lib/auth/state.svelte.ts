@@ -3,9 +3,12 @@
  */
 
 import type { User as SupabaseUser } from '@supabase/supabase-js';
+import { goto } from '$app/navigation';
 import { supabase } from '$lib/supabase/client';
 import { syncProfileForCurrentUser } from '$lib/supabase/profiles';
 import type { AuthUser } from './types';
+
+const PASSWORD_RECOVERY_FLAG = 'auth:password-recovery';
 
 // Reactive auth state
 export const authState = $state({
@@ -90,9 +93,22 @@ export function initAuth(): void {
 			authState.loading = false;
 		});
 
-	supabase.auth.onAuthStateChange((_event, session) => {
+	supabase.auth.onAuthStateChange((event, session) => {
 		authState.user = session?.user ? toAuthUser(session.user) : null;
 		authState.loading = false;
+
+		// Hash-based recovery links can land on "/#access_token=...&type=recovery".
+		// Persist a short-lived flag for the set-new-password screen and redirect
+		// there when recovery starts outside that route.
+		if (event === 'PASSWORD_RECOVERY' && typeof window !== 'undefined') {
+			window.sessionStorage.setItem(PASSWORD_RECOVERY_FLAG, '1');
+			if (
+				window.location.pathname !== '/set-new-password/' &&
+				window.location.pathname !== '/set-new-password'
+			) {
+				void goto('/set-new-password/');
+			}
+		}
 
 		// Keep profile row in sync when auth state changes (sign-in, token refresh, etc).
 		if (session?.user) {
