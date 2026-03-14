@@ -14,7 +14,7 @@
     import { zod4 } from 'sveltekit-superforms/adapters';
     import { loginSchema } from './auth-schemas';
 
-    // Server error state (Firebase auth errors, not field validation)
+    // Server error state (provider auth errors, not field validation)
 	let serverError = $state<string | null>(null);
 	let loading = $state(false);
 

@@ -50,7 +50,7 @@
 		"vite-plugin-devtools-json": "^1.0.0"
 	},
 	"dependencies": {
-		"firebase": "^12.7.0",
+		"@supabase/supabase-js": "^2.99.1",
 		"mode-watcher": "^1.1.0",
 		"zod": "^4.3.6"
 	}

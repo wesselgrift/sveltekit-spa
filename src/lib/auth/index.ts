@@ -18,7 +18,8 @@ export {
 	logout,
 	changeEmail,
 	changePassword,
-	deleteAccount
+	deleteAccount,
+	updateDisplayName
 } from './actions';
 
 // Re-export guards
@@ -26,3 +27,6 @@ export { requireAuth, requireVerifiedEmail } from './guards';
 
 // Re-export error handling
 export { getAuthErrorMessage } from './errors';
+
+// Re-export auth types
+export type { AuthUser } from './types';

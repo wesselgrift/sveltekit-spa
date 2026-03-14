@@ -7,7 +7,8 @@
 	 */
 
 	import { authState } from '$lib/auth/state.svelte';
-	import { updateProfile } from 'firebase/auth';
+	import { updateDisplayName } from '$lib/auth/actions';
+	import { getAuthErrorMessage } from '$lib/auth/errors';
 	import { splitDisplayName } from '$lib/helpers/name-helpers';
 	import * as Form from '$lib/components/ui/form';
 	import { Input } from '$lib/components/ui/input';
@@ -45,9 +46,8 @@
 				try {
 					const newDisplayName = `${f.data.firstName.trim()} ${f.data.lastName.trim()}`;
 
-					await updateProfile(authState.user, {
-						displayName: newDisplayName
-					});
+					await updateDisplayName(newDisplayName);
+					await authState.user.reload();
 
 					// Update local state immediately so UI reflects the change
 					savedDisplayName = newDisplayName;
@@ -59,7 +59,7 @@
 						closeEditForm();
 					}, 1500);
 				} catch (err) {
-					serverError = err instanceof Error ? err.message : 'Failed to update name';
+					serverError = getAuthErrorMessage(err);
 				} finally {
 					loading = false;
 				}

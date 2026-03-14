@@ -3,7 +3,7 @@
 	/**
 	 * Account section / delete account component
 	 * Allows for account deletion
-	 * Also deletes Firestore records (see deleteAccount())
+	 * Also removes profile/auth records (see deleteAccount())
 	 */
 
 	import { goto } from '$app/navigation';

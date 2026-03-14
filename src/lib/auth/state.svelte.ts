@@ -2,19 +2,61 @@
  * Manages reactive auth state using Svelte 5 runes.
  */
 
-import { onAuthStateChanged, type User } from 'firebase/auth';
-import { auth } from '../firebase/config';
+import type { User as SupabaseUser } from '@supabase/supabase-js';
+import { supabase } from '$lib/supabase/client';
+import { syncProfileForCurrentUser } from '$lib/supabase/profiles';
+import type { AuthUser } from './types';
 
 // Reactive auth state
 export const authState = $state({
-	user: null as User | null,
+	user: null as AuthUser | null,
 	loading: true as boolean
 });
 
 // Prevents duplicate listener registration in dev/HMR
 let listenerRegistered = false;
 
-// Initializes Firebase auth state listener
+// Normalizes Supabase user shape to the existing app-level auth shape.
+function toAuthUser(user: SupabaseUser): AuthUser {
+	const authUser: AuthUser = {
+		uid: user.id,
+		email: user.email ?? null,
+		displayName: (user.user_metadata?.display_name as string | undefined) ?? null,
+		emailVerified: Boolean(user.email_confirmed_at),
+		reload: async () => {
+			const latestUser = await fetchLatestUser();
+
+			if (!latestUser) {
+				authState.user = null;
+				return;
+			}
+
+			// Keep the same object reference so call-sites awaiting reload can
+			// inspect updated fields without waiting for a re-read from authState.
+			authUser.uid = latestUser.id;
+			authUser.email = latestUser.email ?? null;
+			authUser.displayName =
+				(latestUser.user_metadata?.display_name as string | undefined) ?? null;
+			authUser.emailVerified = Boolean(latestUser.email_confirmed_at);
+			authState.user = authUser;
+		}
+	};
+
+	return authUser;
+}
+
+// Reads the latest authenticated user from Supabase.
+async function fetchLatestUser(): Promise<SupabaseUser | null> {
+	const { data, error } = await supabase.auth.getUser();
+	if (error) {
+		console.error('Failed to fetch latest auth user:', error);
+		return null;
+	}
+
+	return data.user;
+}
+
+// Initializes Supabase auth state listener.
 export function initAuth(): void {
 	if (listenerRegistered) {
 		return;
@@ -22,9 +64,42 @@ export function initAuth(): void {
 
 	listenerRegistered = true;
 
-	onAuthStateChanged(auth, (firebaseUser) => {
-		authState.user = firebaseUser;
+	void supabase.auth
+		.getSession()
+		.then(({ data, error }) => {
+			if (error) {
+				console.error('Failed to read auth session:', error);
+				authState.user = null;
+				authState.loading = false;
+				return;
+			}
+
+			authState.user = data.session?.user ? toAuthUser(data.session.user) : null;
+			authState.loading = false;
+
+			// Profile upsert must happen under an authenticated session to satisfy RLS.
+			if (data.session?.user) {
+				void syncProfileForCurrentUser().catch((profileError: unknown) => {
+					console.error('Failed to sync user profile after session init:', profileError);
+				});
+			}
+		})
+		.catch((error: unknown) => {
+			console.error('Unexpected auth initialization error:', error);
+			authState.user = null;
+			authState.loading = false;
+		});
+
+	supabase.auth.onAuthStateChange((_event, session) => {
+		authState.user = session?.user ? toAuthUser(session.user) : null;
 		authState.loading = false;
+
+		// Keep profile row in sync when auth state changes (sign-in, token refresh, etc).
+		if (session?.user) {
+			void syncProfileForCurrentUser().catch((profileError: unknown) => {
+				console.error('Failed to sync user profile after auth state change:', profileError);
+			});
+		}
 	});
 }
 

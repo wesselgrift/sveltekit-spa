@@ -8,6 +8,7 @@
 	 */
 
 	import { authState, sendVerificationEmail, getAuthErrorMessage, logout } from '$lib/auth';
+	import { onMount } from 'svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { Alert, AlertTitle, AlertDescription } from '$lib/components/ui/alert';
@@ -34,51 +35,44 @@
 	// Get user email for display
 	const userEmail = $derived(authState.user?.email ?? null);
 
-	// Auto-check email verification status periodically
-	// Firebase user.emailVerified won't update in-memory until reload
-	$effect(() => {
-		// Only run in browser and after auth finishes loading
-		if (typeof window === 'undefined' || authState.loading) {
-			return;
-		}
+	// Poll auth status periodically so we can react when the user confirms email
+	// in another tab without requiring manual refresh.
+	onMount(() => {
+		let disposed = false;
 
-		const user = authState.user;
-		if (!user) {
-			onRequireAuth();
-			return;
-		}
+		const checkStatus = async (): Promise<void> => {
+			if (disposed || authState.loading) {
+				return;
+			}
 
-		// If already verified, redirect immediately
-		if (user.emailVerified) {
-			onVerified();
-			return;
-		}
-
-		// Poll for verification status every 3 seconds
-		// This allows auto-redirect when user verifies email in another tab
-		const intervalId = setInterval(async () => {
 			const currentUser = authState.user;
 			if (!currentUser) {
-				clearInterval(intervalId);
+				onRequireAuth();
+				return;
+			}
+
+			if (currentUser.emailVerified) {
+				onVerified();
 				return;
 			}
 
 			try {
-				// Reload user to get latest emailVerified status
 				await currentUser.reload();
-				// Check if verified after reload
 				if (currentUser.emailVerified) {
-					clearInterval(intervalId);
 					onVerified();
 				}
 			} catch (err) {
-				// Silently fail polling - user can use manual refresh button
 				console.error('Error checking verification status:', err);
 			}
+		};
+
+		void checkStatus();
+		const intervalId = setInterval(() => {
+			void checkStatus();
 		}, 3000);
 
-		// Cleanup interval on component unmount or when user changes
 		return () => {
+			disposed = true;
 			clearInterval(intervalId);
 		};
 	});
@@ -93,7 +87,7 @@
 		try {
 			checkingVerification = true;
 			error = null;
-			// Reload user to get latest emailVerified status
+			// Refresh auth metadata to get latest emailVerified status.
 			await currentUser.reload();
 
 			// Check if verified after reload

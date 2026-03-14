@@ -18,7 +18,7 @@
 				SvelteKit SPA
 			</h1>
 			<p class="text-lg text-muted-foreground">
-				A minimal boilerplate for building SPA's with SvelteKit using adapter-static, Firebase Auth, Firestore and shadcn-svelte UI.
+				A minimal boilerplate for building SPAs with SvelteKit using adapter-static, Supabase Auth, Supabase Postgres and shadcn-svelte UI.
 			</p>
 		</div>
 
