@@ -155,6 +155,20 @@ export async function sendVerificationEmail(user: AuthUser): Promise<void> {
 	}
 }
 
+// Resend signup verification by email when no session is active yet.
+export async function resendSignupVerification(email: string): Promise<void> {
+	const { error } = await supabase.auth.resend({
+		type: 'signup',
+		email,
+		options: {
+			emailRedirectTo: getRedirectUrl('/verify-email/')
+		}
+	});
+	if (error) {
+		throw error;
+	}
+}
+
 // Sign out the current user.
 // Throws Supabase auth errors that should be caught and displayed to the user.
 export async function logout(): Promise<void> {

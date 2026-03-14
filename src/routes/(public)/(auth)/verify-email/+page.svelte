@@ -13,14 +13,19 @@
 	import { VerifyEmail } from '$lib/components/auth';
 
 	const nextParam = $derived(page.url.searchParams.get('next'));
+	const pendingEmail = $derived(page.url.searchParams.get('email'));
 	const nextQuery = $derived(nextParam ? `?next=${encodeURIComponent(nextParam)}` : '');
+	const allowUnauthenticated = $derived(Boolean(pendingEmail));
 
 	// Guard access and handle already-verified users
 	$effect(() => {
 		if (authState.loading) return;
 
-		// No user: send to login, preserve intended destination if present
+		// Allow unauthenticated access when arriving from signup with email param.
 		if (authState.user === null) {
+			if (allowUnauthenticated) {
+				return;
+			}
 			goto(`/login${nextQuery}`);
 			return;
 		}
@@ -32,6 +37,9 @@
 	});
 
 	const handleRequireAuth = (): void => {
+		if (allowUnauthenticated) {
+			return;
+		}
 		goto(`/login${nextQuery}`);
 	};
 
@@ -55,6 +63,8 @@
 			onRequireAuth={handleRequireAuth}
 			onVerified={handleVerified}
 			onSignOut={handleSignOut}
+			pendingEmail={pendingEmail}
+			allowUnauthenticated={allowUnauthenticated}
 		/>
 	</div>
 </div>

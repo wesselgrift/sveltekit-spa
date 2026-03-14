@@ -15,6 +15,7 @@ export {
 	verifyPasswordResetCode,
 	confirmPasswordReset,
 	sendVerificationEmail,
+	resendSignupVerification,
 	logout,
 	changeEmail,
 	changePassword,

@@ -30,8 +30,17 @@
 		}
 	});
 
-	function handleSignupSuccess(): void {
-		goto(`/verify-email${nextQuery}`);
+	function handleSignupSuccess(email: string): void {
+		const params = new URLSearchParams();
+		if (nextParam) {
+			params.set('next', nextParam);
+		}
+		if (email) {
+			params.set('email', email);
+		}
+
+		const query = params.toString();
+		goto(query ? `/verify-email?${query}` : '/verify-email');
 	}
 
     // Only render login form when auth check is complete and user is not authenticated

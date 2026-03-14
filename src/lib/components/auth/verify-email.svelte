@@ -7,7 +7,13 @@
 	 * and reports verification/auth changes so the parent page can navigate.
 	 */
 
-	import { authState, sendVerificationEmail, getAuthErrorMessage, logout } from '$lib/auth';
+	import {
+		authState,
+		sendVerificationEmail,
+		resendSignupVerification,
+		getAuthErrorMessage,
+		logout
+	} from '$lib/auth';
 	import { onMount } from 'svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Spinner } from '$lib/components/ui/spinner';
@@ -17,10 +23,18 @@
 	const noop = () => {};
 
 	// Let parent pages control navigation flows (login redirect, verified redirect, sign-out).
-	const { onRequireAuth = noop, onVerified = noop, onSignOut = noop } = $props<{
+	const {
+		onRequireAuth = noop,
+		onVerified = noop,
+		onSignOut = noop,
+		pendingEmail = null,
+		allowUnauthenticated = false
+	} = $props<{
 		onRequireAuth?: () => void;
 		onVerified?: () => void;
 		onSignOut?: () => void;
+		pendingEmail?: string | null;
+		allowUnauthenticated?: boolean;
 	}>();
 
 	// UI state
@@ -33,7 +47,7 @@
 	let checkFeedback = $state<'verified' | 'not-verified' | null>(null);
 
 	// Get user email for display
-	const userEmail = $derived(authState.user?.email ?? null);
+	const userEmail = $derived(authState.user?.email ?? pendingEmail ?? null);
 
 	// Poll auth status periodically so we can react when the user confirms email
 	// in another tab without requiring manual refresh.
@@ -47,6 +61,9 @@
 
 			const currentUser = authState.user;
 			if (!currentUser) {
+				if (allowUnauthenticated) {
+					return;
+				}
 				onRequireAuth();
 				return;
 			}
@@ -113,14 +130,18 @@
 
 	// Resend verification email handler
 	async function handleResendVerification(): Promise<void> {
-		if (!authState.user) {
-			return;
-		}
-
 		try {
 			loading = true;
 			error = null;
-			await sendVerificationEmail(authState.user);
+
+			if (authState.user) {
+				await sendVerificationEmail(authState.user);
+			} else if (pendingEmail) {
+				await resendSignupVerification(pendingEmail);
+			} else {
+				return;
+			}
+
 			resendFeedback = 'sent';
 			setTimeout(() => {
 				resendFeedback = null;
@@ -170,7 +191,7 @@
     <div class="flex flex-col gap-2.5">
         <Button
             onclick={handleResendVerification}
-            disabled={loading || !authState.user}
+            disabled={loading || (!authState.user && !pendingEmail)}
             class="w-full"
         >
             <!-- Buton icon -->
@@ -188,34 +209,42 @@
             {/if}
         </Button>
 
-        <Button
-            variant="outline"
-            onclick={handleCheckVerification}
-            disabled={checkingVerification || !authState.user}
-            class="w-full"
-        >
-            <!-- Buton icon -->
-            {#if checkingVerification}
-                <Spinner />
-            {:else if checkFeedback === 'verified'}
-                <Check />
-            {:else if checkFeedback === 'not-verified'}
-                <Frown />
-            {/if}
+		{#if authState.user}
+			<Button
+				variant="outline"
+				onclick={handleCheckVerification}
+				disabled={checkingVerification}
+				class="w-full"
+			>
+				<!-- Buton icon -->
+				{#if checkingVerification}
+					<Spinner />
+				{:else if checkFeedback === 'verified'}
+					<Check />
+				{:else if checkFeedback === 'not-verified'}
+					<Frown />
+				{/if}
 
-            <!-- Button label -->
-            {#if checkFeedback === 'verified'}
-                Verified
-            {:else if checkFeedback === 'not-verified'}
-                Not verified yet
-            {:else}
-                I verified, refresh
-            {/if}
-        </Button>
+				<!-- Button label -->
+				{#if checkFeedback === 'verified'}
+					Verified
+				{:else if checkFeedback === 'not-verified'}
+					Not verified yet
+				{:else}
+					I verified, refresh
+				{/if}
+			</Button>
+		{/if}
     </div>
 
     <!-- Sign up with different email -->
-    <span role="presentation" class="text-sm text-center text-muted-foreground cursor-pointer hover:underline" onclick={handleLogout}>
-        Sign up with different email
-    </span>
+	{#if authState.user}
+		<span
+			role="presentation"
+			class="text-sm text-center text-muted-foreground cursor-pointer hover:underline"
+			onclick={handleLogout}
+		>
+			Sign up with different email
+		</span>
+	{/if}
 </div>
