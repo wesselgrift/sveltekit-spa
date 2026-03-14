@@ -17,34 +17,49 @@
 	const nextParam = $derived(page.url.searchParams.get('next'));
 	const nextQuery = $derived(nextParam ? `?next=${encodeURIComponent(nextParam)}` : '');
 
-	// Redirect authenticated users away from signup
+	// Set after successful signup to trigger navigation via the unified $effect below.
+	// Avoids a race between goto in a superform callback and the reactive auth-state redirect.
+	let signupEmail = $state<string | null>(null);
+	// Prevent duplicate hard redirects during reactive churn.
+	let signupRedirectTriggered = false;
+
+	// Unified navigation: handles both already-authenticated redirect and post-signup redirect.
+	// We use hard navigation for the post-signup case because this callback-driven superform flow
+	// can resolve goto() without committing the route transition.
 	$effect(() => {
-		if (authState.loading || authState.user === null) {
+		if (authState.loading) return;
+
+		// Post-signup takes priority: navigate with the email param
+		if (signupEmail !== null) {
+			const params = new URLSearchParams();
+			if (nextParam) params.set('next', nextParam);
+			params.set('email', signupEmail);
+			const redirectTarget = `/verify-email/?${params.toString()}`;
+
+			if (signupRedirectTriggered) return;
+			signupRedirectTriggered = true;
+
+			// In this signup + superforms flow, goto() can resolve without committing a route change.
+			// Use a hard navigation here so post-signup redirect to verify-email is always reliable.
+			window.location.assign(redirectTarget);
 			return;
 		}
 
+		// Existing-session can use client-side routing.
+		if (authState.user === null) return;
 		if (authState.user.emailVerified) {
-			goto(nextParam ?? '/app');
+			void goto(nextParam ?? '/app');
 		} else {
-			goto(`/verify-email${nextQuery}`);
+			void goto(`/verify-email/${nextQuery}`);
 		}
 	});
 
 	function handleSignupSuccess(email: string): void {
-		const params = new URLSearchParams();
-		if (nextParam) {
-			params.set('next', nextParam);
-		}
-		if (email) {
-			params.set('email', email);
-		}
-
-		const query = params.toString();
-		goto(query ? `/verify-email?${query}` : '/verify-email');
+		signupEmail = email;
 	}
 
-    // Only render login form when auth check is complete and user is not authenticated
-	const showSignupForm = $derived(!authState.loading && authState.user === null);
+	// Hide the form once auth resolves with a user OR after successful signup
+	const showSignupForm = $derived(!authState.loading && authState.user === null && signupEmail === null);
 </script>
 
 <div class="flex md:min-h-screen items-center justify-center p-4 pt-10 md:pt-4">
