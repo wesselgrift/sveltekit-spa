@@ -88,6 +88,7 @@ In Supabase dashboard:
 1. Go to **Authentication -> Providers** and enable **Email**.
 2. In **Authentication -> URL Configuration**, set the site URL and allow redirect URLs for both development and production.
 3. This app builds redirect links from `window.location.origin`, so both local and production origins must be allowlisted.
+4. For production email deliverability, configure **Authentication -> Email (SMTP)** with your provider of choice (for example Resend, Postmark, SendGrid, etc.). This app calls Supabase Auth endpoints only, so provider credentials stay inside Supabase.
 
 Recommended configuration:
 
@@ -95,15 +96,14 @@ Recommended configuration:
 - **Redirect URLs**:
   - `http://localhost:5173/verify-email/`
   - `http://localhost:5173/set-new-password/`
+  - `http://localhost:5173/reset-password/`
   - `https://your-domain.dev/verify-email/`
   - `https://your-domain.dev/set-new-password/`
+  - `https://your-domain.dev/reset-password/`
   - `https://www.your-domain.dev/verify-email/`
   - `https://www.your-domain.dev/set-new-password/`
+  - `https://www.your-domain.dev/reset-password/`
 
-Optional (if used in your flow):
-- `http://localhost:5173/reset-password/`
-- `https://your-domain.dev/reset-password/`
-- `https://www.your-domain.dev/reset-password/`
 
 ### 4) Database setup (`user_profiles` + RLS)
 
