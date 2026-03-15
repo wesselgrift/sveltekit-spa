@@ -15,6 +15,7 @@
 
 	// Get next param for redirect after login
 	const nextParam = $derived(page.url.searchParams.get('next'));
+	const nextQuery = $derived(nextParam ? `?next=${encodeURIComponent(nextParam)}` : '');
 
 	// Redirect if user is (already) logged in
 	$effect(() => {
@@ -23,15 +24,28 @@
         }
 
         if (authState.user.emailVerified) {
-            goto(nextParam ?? '/app');
+            void goto(nextParam ?? '/app');
         } else {
-            const next = nextParam ? `?next=${encodeURIComponent(nextParam)}` : '';
-            goto(`/verify-email${next}`);
+            void goto(`/verify-email${nextQuery}`);
         }
     });
 
     // Only render login form when auth check is complete and user is not authenticated
 	const showLoginForm = $derived(!authState.loading && authState.user === null);
+
+	// Sends unverified users to verify-email with context needed to resend and preserve intent.
+	const handleRequireVerification = (email: string): void => {
+		const params = new URLSearchParams();
+		params.set('email', email);
+		if (nextParam) {
+			params.set('next', nextParam);
+		}
+		const redirectTarget = `/verify-email?${params.toString()}`;
+
+		// Mirror the signup fix: hard navigation avoids occasional swallowed route changes
+		// when redirects are triggered from superform callback lifecycles.
+		window.location.assign(redirectTarget);
+	};
 </script>
 
 <div class="flex md:min-h-screen items-center justify-center p-4 pt-10 md:pt-4">
@@ -42,7 +56,7 @@
             <h1 class="text-2xl font-medium">Log in</h1>
             
             <!-- Login form component -->
-            <LoginForm />
+            <LoginForm onRequireVerification={handleRequireVerification} />
 
             <!-- Links to other auth pages -->
             <div class="flex flex-col gap-2.5 text-center">

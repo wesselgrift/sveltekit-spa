@@ -14,9 +14,28 @@
     import { zod4 } from 'sveltekit-superforms/adapters';
     import { loginSchema } from './auth-schemas';
 
+	const noop = () => {};
+
+	// Parent can handle unverified-login flows (e.g., redirect to verify-email).
+	const { onRequireVerification = noop } = $props<{
+		onRequireVerification?: (email: string) => void;
+	}>();
+
     // Server error state (provider auth errors, not field validation)
 	let serverError = $state<string | null>(null);
 	let loading = $state(false);
+
+	// Supabase recommends identifying auth failures by structured error codes.
+	// `email_not_confirmed` indicates valid credentials for an unverified account.
+	function isEmailNotConfirmedError(error: unknown): boolean {
+		if (!error || typeof error !== 'object') {
+			return false;
+		}
+
+		const codeValue = (error as { code?: unknown }).code;
+		const code = typeof codeValue === 'string' ? codeValue.toLowerCase() : '';
+		return code === 'email_not_confirmed';
+	}
 
     const form = superForm(defaults(zod4(loginSchema)), {
         validators: zod4(loginSchema),
@@ -28,7 +47,11 @@
                     serverError = null;
                     await loginWithEmail(f.data.email, f.data.password);
                 } catch (err) {
-                    serverError = getAuthErrorMessage(err);
+					if (isEmailNotConfirmedError(err)) {
+						onRequireVerification(f.data.email);
+					} else {
+						serverError = getAuthErrorMessage(err);
+					}
                 } finally {
                     loading = false;
                 }

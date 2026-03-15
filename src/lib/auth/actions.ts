@@ -72,7 +72,7 @@ export async function loginWithEmail(email: string, password: string): Promise<v
 // Throws Supabase auth errors that should be caught and displayed to the user.
 export async function signupWithEmail(firstName: string, lastName: string, email: string, password: string): Promise<void> {
 	const displayName = `${firstName.trim()} ${lastName.trim()}`.trim();
-	const { error } = await supabase.auth.signUp({
+	const { data, error } = await supabase.auth.signUp({
 		email,
 		password,
 		options: {
@@ -84,6 +84,13 @@ export async function signupWithEmail(firstName: string, lastName: string, email
 	});
 	if (error) {
 		throw error;
+	}
+
+	// Supabase may return a successful response for existing users to prevent
+	// account enumeration. In that case, identities is typically empty.
+	// Convert this into a stable app-level error code so signup can stay inline.
+	if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+		throw { code: 'user_already_exists' };
 	}
 }
 
