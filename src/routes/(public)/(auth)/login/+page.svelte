@@ -42,7 +42,7 @@
 		}
 		const redirectTarget = `/verify-email?${params.toString()}`;
 
-		// Mirror the signup fix: hard navigation avoids occasional swallowed route changes
+		// Mirror the signup routing pattern: hard navigation avoids occasional swallowed route changes
 		// when redirects are triggered from superform callback lifecycles.
 		window.location.assign(redirectTarget);
 	};

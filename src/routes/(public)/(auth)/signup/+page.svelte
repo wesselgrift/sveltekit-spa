@@ -39,7 +39,7 @@
 			if (signupRedirectTriggered) return;
 			signupRedirectTriggered = true;
 
-			// In this signup + superforms flow, goto() can resolve without committing a route change.
+			// Custom routing pattern: in this signup + superforms flow, goto() can resolve without committing a route change.
 			// Use a hard navigation here so post-signup redirect to verify-email is always reliable.
 			// A tiny delay gives the loading UI one paint cycle so the spinner visibly animates.
 			setTimeout(() => {
