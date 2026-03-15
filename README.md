@@ -86,13 +86,24 @@ Notes:
 In Supabase dashboard:
 
 1. Go to **Authentication -> Providers** and enable **Email**.
-2. In **Authentication -> URL Configuration**, add your site URL and redirect URLs.
-3. Include auth callback destinations used by this app:
-   - `/verify-email/`
-   - `/set-new-password/`
+2. In **Authentication -> URL Configuration**, set the site URL and allow redirect URLs for both development and production.
+3. This app builds redirect links from `window.location.origin`, so both local and production origins must be allowlisted.
 
-For local development, a typical site URL is:
-- `http://localhost:5173`
+Recommended configuration:
+
+- **Site URL**: `https://sveltespa.dev`
+- **Redirect URLs**:
+  - `http://localhost:5173/verify-email/`
+  - `http://localhost:5173/set-new-password/`
+  - `https://sveltespa.dev/verify-email/`
+  - `https://sveltespa.dev/set-new-password/`
+  - `https://www.sveltespa.dev/verify-email/`
+  - `https://www.sveltespa.dev/set-new-password/`
+
+Optional (if used in your flow):
+- `http://localhost:5173/reset-password/`
+- `https://sveltespa.dev/reset-password/`
+- `https://www.sveltespa.dev/reset-password/`
 
 ### 4) Database setup (`user_profiles` + RLS)
 
@@ -187,13 +198,38 @@ order by tablename, policyname;
 | `npm run lint` | ESLint + Prettier checks |
 | `npm run format` | Format code |
 
-## Deployment
+## Deployment (GitHub Pages + Custom Domain)
 
-This project builds static assets and can be deployed to any static host:
+This repository includes a GitHub Pages workflow at `.github/workflows/deploy-pages.yml` that:
 
-- Vercel
-- Netlify
-- Cloudflare Pages
-- Firebase Hosting
+1. Builds the app with `npm run build`
+2. Uploads the `build` directory as a Pages artifact
+3. Deploys with `actions/deploy-pages`
 
-Ensure production redirect URLs are configured in Supabase Auth settings.
+### GitHub setup
+
+1. Go to **Repository -> Settings -> Pages**
+2. Set **Source** to **GitHub Actions**
+3. Do not use the suggested Jekyll or Static HTML templates
+
+### Repository secrets
+
+Add these in **Repository -> Settings -> Secrets and variables -> Actions**:
+
+- `PUBLIC_SUPABASE_URL`
+- `PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+
+These are injected during CI build in the Pages workflow.
+
+### Custom domain (`sveltespa.dev`)
+
+In **Repository -> Settings -> Pages**:
+
+1. Set custom domain to `sveltespa.dev`
+2. Wait for DNS/certificate validation
+3. Enable **Enforce HTTPS** when available
+
+DNS records should include:
+- Apex `A` records to GitHub Pages IPs (`185.199.108.153`, `.109.153`, `.110.153`, `.111.153`)
+- Apex `AAAA` records to GitHub Pages IPv6 endpoints
+- `www` `CNAME` to `wesselgrift.github.io`
