@@ -91,19 +91,19 @@ In Supabase dashboard:
 
 Recommended configuration:
 
-- **Site URL**: `https://sveltespa.dev`
+- **Site URL**: `https://your-domain.dev`
 - **Redirect URLs**:
   - `http://localhost:5173/verify-email/`
   - `http://localhost:5173/set-new-password/`
-  - `https://sveltespa.dev/verify-email/`
-  - `https://sveltespa.dev/set-new-password/`
-  - `https://www.sveltespa.dev/verify-email/`
-  - `https://www.sveltespa.dev/set-new-password/`
+  - `https://your-domain.dev/verify-email/`
+  - `https://your-domain.dev/set-new-password/`
+  - `https://www.your-domain.dev/verify-email/`
+  - `https://www.your-domain.dev/set-new-password/`
 
 Optional (if used in your flow):
 - `http://localhost:5173/reset-password/`
-- `https://sveltespa.dev/reset-password/`
-- `https://www.sveltespa.dev/reset-password/`
+- `https://your-domain.dev/reset-password/`
+- `https://www.your-domain.dev/reset-password/`
 
 ### 4) Database setup (`user_profiles` + RLS)
 
@@ -221,15 +221,15 @@ Add these in **Repository -> Settings -> Secrets and variables -> Actions**:
 
 These are injected during CI build in the Pages workflow.
 
-### Custom domain (`sveltespa.dev`)
+### Custom domain (`your-domain.dev`)
 
 In **Repository -> Settings -> Pages**:
 
-1. Set custom domain to `sveltespa.dev`
+1. Set custom domain to `your-domain.dev`
 2. Wait for DNS/certificate validation
 3. Enable **Enforce HTTPS** when available
 
 DNS records should include:
 - Apex `A` records to GitHub Pages IPs (`185.199.108.153`, `.109.153`, `.110.153`, `.111.153`)
 - Apex `AAAA` records to GitHub Pages IPv6 endpoints
-- `www` `CNAME` to `wesselgrift.github.io`
+- `www` `CNAME` to `YOUR-GITHUB-USERNAME.github.io`
