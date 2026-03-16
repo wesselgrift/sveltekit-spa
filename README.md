@@ -1,8 +1,11 @@
 # SvelteKit SPA Boilerplate
 
-A production-ready boilerplate for Single Page Applications with SvelteKit, Svelte 5 runes, Supabase Auth, Postgres (RLS), and shadcn-svelte UI components.
+Everything you don't want to spend time on when prototyping or building an MVP — already done.
 
-Built for teams that want a clean auth foundation, protected routes, and account management flows without SSR complexity.
+- Complete auth flows (signup, login, email verification, password reset, account management) with Supabase
+- shadcn-svelte UI components with accessible form patterns
+- Optional multi-step onboarding flow
+- Protected routes, RLS policies, and profile persistence out of the box
 
 ## Features
 
