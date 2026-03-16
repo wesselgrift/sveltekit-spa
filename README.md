@@ -14,6 +14,7 @@ Built for teams that want a clean auth foundation, protected routes, and account
 - shadcn-svelte UI primitives and accessible form patterns
 - Tailwind CSS 4 + TypeScript
 - Protected route group with auth + email verification guards
+- Optional multi-step onboarding flow (feature-flagged, config-driven)
 
 ## MCP Servers (Cursor)
 
@@ -45,7 +46,11 @@ src/routes/
 └── (protected)/
     └── app/
         ├── +page.svelte
-        └── account/+page.svelte
+        ├── account/+page.svelte
+        └── onboarding/           # optional (feature-flagged)
+            ├── +page.svelte
+            ├── step-1/+page.svelte
+            └── step-2/+page.svelte
 ```
 
 ## Key Modules
@@ -58,12 +63,17 @@ src/lib/
 │   ├── guards.ts                # protected route guard helpers
 │   ├── errors.ts                # auth error message mapping
 │   └── types.ts
+├── config/
+│   └── features.ts              # feature flags + onboarding step config
 ├── supabase/
 │   ├── client.ts                # browser Supabase client
 │   └── profiles.ts              # user_profiles helpers + account deletion RPC
 └── components/
     ├── auth/
     ├── account/
+    ├── onboarding/              # optional (feature-flagged)
+    │   ├── onboarding-shell.svelte
+    │   └── onboarding-schemas.ts
     └── ui/
 ```
 
@@ -119,7 +129,9 @@ Recommended configuration:
 
 ### 4) Database setup (`user_profiles` + RLS)
 
-Run this in Supabase SQL editor (adjust as needed):
+Run the migration in the Supabase SQL editor, or apply it via the Supabase CLI:
+
+`supabase/migrations/20260316110000_create_user_profiles.sql`
 
 ```sql
 create table if not exists public.user_profiles (
@@ -157,9 +169,25 @@ create policy "user_profiles_delete_own"
   using (auth.uid() = id);
 ```
 
+### 4.1) Onboarding profile columns
+
+When onboarding is enabled, apply the onboarding migration:
+
+`supabase/migrations/20260316120000_add_onboarding_fields_to_user_profiles.sql`
+
+```sql
+alter table public.user_profiles
+  add column if not exists favorite_fruit text,
+  add column if not exists favorite_drink text,
+  add column if not exists onboarding_step integer,
+  add column if not exists onboarding_completed_at timestamptz;
+```
+
 ### 5) Account deletion RPC setup
 
-This app calls `rpc('delete_current_user')` from the browser. Create a secure function:
+This app calls `rpc('delete_current_user')` from the browser. Apply the migration:
+
+`supabase/migrations/20260316115000_create_delete_current_user_rpc.sql`
 
 ```sql
 create or replace function public.delete_current_user()
@@ -182,6 +210,35 @@ grant execute on function public.delete_current_user() to authenticated;
 ```bash
 npm run dev
 ```
+
+## Optional: Onboarding Flow
+
+This boilerplate includes an optional multi-step onboarding flow that guides new users through profile setup before they can access the app. It is controlled by a single feature flag.
+
+### How it works
+
+1. **Feature flag** — Toggle onboarding on/off in `src/lib/config/features.ts` via `featureFlags.enableOnboarding`. When disabled, users go straight to the app after login.
+2. **Config-driven steps** — Onboarding steps are defined as data in `onboardingSteps` (same file). Add, remove, or reorder steps without touching route files.
+3. **Protected layout enforcement** — When enabled, the protected layout (`src/routes/(protected)/app/+layout.svelte`) redirects users who haven't completed onboarding to the correct step. No per-page guard logic needed.
+4. **Progress persistence** — Step progress and completion are saved to `user_profiles` via helpers in `src/lib/supabase/profiles.ts`. Users can resume where they left off.
+5. **Skip prevention** — Users cannot jump ahead; the layout redirects them to their current required step.
+
+### Enabling onboarding
+
+1. Set `enableOnboarding: true` in `src/lib/config/features.ts` (this is the default).
+2. Apply the onboarding database migration (see step 4.1 in Quick Start above).
+
+### Disabling onboarding
+
+1. Set `enableOnboarding: false` in `src/lib/config/features.ts`.
+2. The onboarding routes and migration can be left in place — they are inert when the flag is off.
+
+### Customizing steps
+
+Edit the `onboardingSteps` array in `src/lib/config/features.ts` to change questions, labels, or field keys. For each field you add or change, update:
+- The `OnboardingFieldKey` type (same file)
+- The Zod schema in `src/lib/components/onboarding/onboarding-schemas.ts`
+- The `user_profiles` columns in the onboarding migration
 
 ## Security Model (Supabase equivalent of Firestore rules)
 

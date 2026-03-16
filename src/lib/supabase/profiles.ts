@@ -3,11 +3,16 @@
  */
 
 import { supabase } from './client';
+import { onboardingStepCount } from '$lib/config/features';
 
 export interface UserProfile {
 	id: string;
 	email: string | null;
 	display_name: string | null;
+	favorite_fruit?: string | null;
+	favorite_drink?: string | null;
+	onboarding_step?: number | null;
+	onboarding_completed_at?: string | null;
 	created_at?: string;
 }
 
@@ -36,6 +41,100 @@ export async function upsertUserProfile(profile: UserProfile): Promise<void> {
 	if (error) {
 		throw error;
 	}
+}
+
+// Reads the authenticated user's profile row from user_profiles.
+// Returns null when no row is present yet.
+export async function getCurrentUserProfile(): Promise<UserProfile | null> {
+	const { data: authData, error: authError } = await supabase.auth.getUser();
+	if (authError) {
+		throw authError;
+	}
+
+	if (!authData.user) {
+		return null;
+	}
+
+	const { data, error } = await supabase
+		.from('user_profiles')
+		.select(
+			'id, email, display_name, favorite_fruit, favorite_drink, onboarding_step, onboarding_completed_at, created_at'
+		)
+		.eq('id', authData.user.id)
+		.maybeSingle();
+
+	if (error) {
+		throw error;
+	}
+
+	return data;
+}
+
+export interface UserProfileUpdate {
+	email?: string | null;
+	display_name?: string | null;
+	favorite_fruit?: string | null;
+	favorite_drink?: string | null;
+	onboarding_step?: number | null;
+	onboarding_completed_at?: string | null;
+}
+
+// Updates the authenticated user's profile row using partial fields.
+export async function updateCurrentUserProfile(values: UserProfileUpdate): Promise<void> {
+	const { data: authData, error: authError } = await supabase.auth.getUser();
+	if (authError) {
+		throw authError;
+	}
+
+	if (!authData.user) {
+		throw new Error('No authenticated user found');
+	}
+
+	const { error } = await supabase.from('user_profiles').update(values).eq('id', authData.user.id);
+	if (error) {
+		throw error;
+	}
+}
+
+// Persists one onboarding step field and marks progress.
+export async function saveOnboardingStep(
+	stepNumber: number,
+	field: 'favorite_fruit' | 'favorite_drink',
+	value: string
+): Promise<void> {
+	await updateCurrentUserProfile({
+		[field]: value,
+		onboarding_step: stepNumber
+	});
+}
+
+// Completes onboarding with the final step field and completion timestamp.
+export async function completeOnboarding(finalValue: string): Promise<void> {
+	await updateCurrentUserProfile({
+		favorite_drink: finalValue,
+		onboarding_step: onboardingStepCount,
+		onboarding_completed_at: new Date().toISOString()
+	});
+}
+
+// Returns true when onboarding has explicitly been marked complete.
+export function isOnboardingComplete(profile: UserProfile | null): boolean {
+	return Boolean(profile?.onboarding_completed_at);
+}
+
+// Computes the next required onboarding step, clamped to the configured range.
+export function getNextOnboardingStep(profile: UserProfile | null): number {
+	if (!profile) {
+		return 1;
+	}
+
+	if (isOnboardingComplete(profile)) {
+		return onboardingStepCount;
+	}
+
+	const savedStep = profile.onboarding_step ?? 0;
+	const nextStep = Math.min(Math.max(savedStep + 1, 1), onboardingStepCount);
+	return nextStep;
 }
 
 // Deletes the current user's profile record by auth uid.

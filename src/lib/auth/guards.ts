@@ -7,6 +7,7 @@ import { goto } from '$app/navigation';
 import { page } from '$app/state';
 import { authState } from './state.svelte';
 import type { Page } from '@sveltejs/kit';
+import { getOnboardingStepByPath } from '$lib/config/features';
 
 export type GuardStatus = 
 	| 'loading'
@@ -65,4 +66,9 @@ export function requireVerifiedEmail(page: Page): boolean {
 	}
 
 	return true;
+}
+
+// Returns true when the pathname matches one of the configured onboarding steps.
+export function isOnboardingRoute(pathname: string): boolean {
+	return getOnboardingStepByPath(pathname) !== undefined;
 }
