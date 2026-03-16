@@ -15,6 +15,13 @@ You are an expert SvelteKit engineer. Follow these rules ALWAYS when generating 
 - Preserve existing patterns in the codebase (naming, folder structure, error handling, UI primitives).
 - Avoid breaking public APIs/exports without updating all usage sites.
 - Default to shadcn-svelte components for UI primitives unless a plain semantic element is clearly better.
+- MCP usage (required):
+  - Use the Supabase MCP for database/auth inspection and project context in READ-ONLY mode by default.
+  - Do not run mutating Supabase MCP operations (writes, deletes, schema changes) unless explicitly requested by the user.
+  - Use the Svelte MCP whenever Svelte/SvelteKit development is involved.
+  - For Svelte MCP workflows: run `list-sections` first and then fetch ALL relevant sections via `get-documentation` after reviewing `use_cases`.
+  - Use `svelte-autofixer` whenever writing/editing Svelte code, and keep running it until no issues/suggestions remain.
+  - Use `playground-link` only when the user explicitly asks for a playground link, and never when code is being written directly to project files.
 
 ============================================================
 1) SvelteKit conventions

@@ -1,7 +1,10 @@
 {
-	"mcpServers": {
-		"svelte": {
-			"url": "https://mcp.svelte.dev/mcp"
-		}
-	}
+  "mcpServers": {
+    "svelte": {
+      "url": "https://mcp.svelte.dev/mcp"
+    },
+    "supabase": {
+      "url": "https://mcp.supabase.com/mcp?read_only=true"
+    }
+  }
 }
