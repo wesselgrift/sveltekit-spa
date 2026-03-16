@@ -15,6 +15,18 @@ Built for teams that want a clean auth foundation, protected routes, and account
 - Tailwind CSS 4 + TypeScript
 - Protected route group with auth + email verification guards
 
+## MCP Servers (Cursor)
+
+This project uses MCP servers in Cursor to improve development workflows and keep implementation aligned with framework and data best practices.
+
+- **Supabase MCP**
+  - Use for database/auth inspection, policy checks, and schema awareness.
+  - Treat as **read-only by default**.
+  - Only run mutating operations (writes/deletes/schema changes) when explicitly intended and reviewed.
+- **Svelte MCP**
+  - Use for Svelte/SvelteKit development guidance and API-accurate docs.
+  - Preferred workflow: `list-sections` -> `get-documentation` (all relevant sections) -> `svelte-autofixer` until no issues remain.
+
 ## Route Structure
 
 ```text
