@@ -2,7 +2,7 @@
 alwaysApply: true
 ---
 
-# Cursor Project Rules — SvelteKit (latest) + Runes + TS + Firebase Auth + Firestore + shadcn-svelte
+# Cursor Project Rules — SvelteKit (latest) + Runes + TS + Supabase Auth + Postgres + shadcn-svelte
 
 You are an expert SvelteKit engineer. Follow these rules ALWAYS when generating or editing code.
 
@@ -22,7 +22,7 @@ You are an expert SvelteKit engineer. Follow these rules ALWAYS when generating 
 - Use SvelteKit file conventions correctly:
   - Route components: +page.svelte, layouts: +layout.svelte, data: +page.ts/+layout.ts.
   - Avoid putting business logic in route files; move reusable logic to src/lib.
-- In SPA mode (ssr=false), do not rely on server-only behavior. Keep Firebase client-side.
+- In SPA mode (ssr=false), do not rely on server-only behavior. Keep Supabase client-side with browser-safe env vars only.
 - Use $app/navigation (goto) and $app/state (page, navigating, updated) for routing concerns.
   - NEVER use deprecated $app/stores - it's for legacy SvelteKit <2.12 only.
   - Import page from $app/state: `import { page } from '$app/state'`
@@ -53,9 +53,9 @@ You are an expert SvelteKit engineer. Follow these rules ALWAYS when generating 
 4) Folder structure + naming
 ============================================================
 - Keep shared code in src/lib:
-  - src/lib/firebase/* for Firebase config and Firestore helpers
+  - src/lib/supabase/* for Supabase client config, typed query helpers, and auth utilities
   - src/lib/auth/* for auth state + actions + guards
-  - src/lib/firestore/* for typed Firestore CRUD/services
+  - src/lib/database/* for typed Postgres query/services (or domain services wrapping Supabase calls)
   - src/lib/components/* for reusable components
   - src/lib/components/ui/* for shadcn-svelte components (unmodified copies unless clearly documented)
   - src/lib/utils/* for pure utilities
@@ -63,8 +63,8 @@ You are an expert SvelteKit engineer. Follow these rules ALWAYS when generating 
   - auth/state.svelte.ts for reactive global state
   - auth/actions.ts for sign-in/sign-out flows
   - auth/guards.ts for requireAuth/requireVerifiedEmail helpers (if used)
-  - firestore/collections.ts for typed collection refs
-  - firestore/services/*.ts for domain-specific operations
+  - supabase/client.ts for singleton browser client setup
+  - database/services/*.ts for domain-specific data operations
 
 ============================================================
 5) shadcn-svelte (UI kit) rules
@@ -102,14 +102,15 @@ This project uses sveltekit-superforms with Zod validation and shadcn-svelte for
 - Markup pattern: `Form.Field` → `Form.Control` with `{#snippet children({ props })}` → spread `{...props}` on Input → `Form.FieldErrors`.
 - Always `bind:value={$formData.fieldName}` (note `$` prefix) and `disabled={loading}` on inputs.
 - Use `Form.Button` for submit with `Spinner` inside when loading.
-- Show server errors (API/Firebase) via Alert, separate from field validation errors.
+- Show server errors (API/Supabase) via Alert, separate from field validation errors.
 - Reference existing forms in `src/lib/components/auth/` and `src/lib/components/account/sections/` for patterns.
 
 ============================================================
-7) Firebase Auth rules
+7) Supabase Auth rules
 ============================================================
 - Auth state must include:
   - `user: User | null`
+  - `session: Session | null` where relevant for UI/session-driven logic
   - `loading: boolean` (true until auth resolves)
   - `error: string | null` where useful
 - Always handle the full auth lifecycle:
@@ -117,19 +118,30 @@ This project uses sveltekit-superforms with Zod validation and shadcn-svelte for
   - signed-out
   - signed-in
   - email verification state (if used)
-- Magic link / email link auth must:
-  - define actionCodeSettings explicitly
-  - handle the “opened on different device” case (missing stored email) by prompting for email
-- Never store tokens in localStorage manually. Let Firebase manage persistence.
-- Provide user-friendly error messages by mapping Firebase error codes to short messages.
+- Subscribe to auth changes through a single, cleanup-safe listener:
+  - use `supabase.auth.onAuthStateChange(...)`
+  - initialize once (idempotent guard) to avoid duplicate listeners in dev/HMR
+- Auth flows MUST use Supabase primitives:
+  - password sign-in/sign-up where applicable
+  - magic link / OTP / OAuth flows where applicable
+  - sign-out via Supabase auth API (do not manually clear storage)
+- Never manage JWT/session token storage manually; let Supabase client persistence handle it.
+- Keep anon key usage client-safe:
+  - only expose `PUBLIC_*` keys in client code
+  - never expose service role keys in SPA/client code
+- Provide user-friendly error messages by mapping Supabase auth errors to short, actionable text.
 
 ============================================================
-8) Firestore rules
+8) Supabase Database (Postgres) rules
 ============================================================
-- Prefer typed collection/document helpers:
-  - use Firestore data converters OR a typed mapping layer.
-- Never scatter raw Firestore calls across many components:
-  - put CRUD in src/lib/firestore/* (services).
+- Prefer typed query helpers and explicit column selection:
+  - centralize table access in `src/lib/database/*` or domain services
+  - select only required columns (avoid broad `select('*')` unless justified)
+- Never scatter raw Supabase table queries across many components:
+  - keep CRUD/query logic in services under `src/lib/database/services/*`.
+- RLS is non-negotiable for user data:
+  - design tables and policies so authorization is enforced in Postgres
+  - assume JWT-based auth context is used for row-level access checks
 - Reads must handle:
   - loading state
   - empty state
@@ -139,7 +151,8 @@ This project uses sveltekit-superforms with Zod validation and shadcn-svelte for
   - success feedback
   - error feedback
 - Prefer queries with indexes in mind; avoid unbounded reads.
-- Do not leak Firestore instance initialization across modules; keep a single initialization path.
+- Use pagination/range limits for list endpoints to avoid overfetching.
+- Keep a single Supabase client initialization path and reuse it across modules.
 
 ============================================================
 9) UX defaults (non-negotiable)
@@ -179,7 +192,7 @@ This project uses sveltekit-superforms with Zod validation and shadcn-svelte for
 ============================================================
 - Add clear, descriptive comments for non-trivial logic so the code is easy to follow.
 - Comment rules:
-  - Explain *why* something exists (guards, edge cases, tricky Firebase behavior), not just *what* the line does.
+  - Explain *why* something exists (guards, edge cases, tricky Supabase/RLS behavior), not just *what* the line does.
   - Place a short header comment at the top of each file describing its purpose and how it fits into the app.
   - For functions: add a brief comment explaining inputs/outputs and side effects (network calls, navigation, storage).
   - For complex blocks: add 1–3 line comments explaining the flow/decision points.
@@ -194,7 +207,7 @@ This project uses sveltekit-superforms with Zod validation and shadcn-svelte for
 - Log unexpected errors to console in dev; keep user messages short and friendly.
 - Prefer predictable error UI over throwing.
 - Avoid infinite redirect loops: guard conditions must be explicit and stable.
-- Handle offline states gracefully for Firestore operations where possible (show “You appear offline”).
+- Handle offline states gracefully for Supabase operations where possible (show “You appear offline”).
 
 ============================================================
 13) Performance + reactivity
