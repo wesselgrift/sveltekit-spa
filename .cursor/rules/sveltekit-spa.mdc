@@ -35,6 +35,9 @@ You are an expert SvelteKit engineer. Follow these rules ALWAYS when generating 
   - Import page from $app/state: `import { page } from '$app/state'`
   - Use `page.url.pathname` directly (no $ prefix needed - it's already reactive with runes).
 - Redirects/guards must be done in layouts for sections (e.g., protected area), not sprinkled across many pages.
+- Never compare pathnames with raw string equality — SvelteKit may add or omit trailing slashes.
+  - Always normalize paths before comparing (strip trailing slash if length > 1).
+  - Prefer comparing parsed identifiers (e.g., step numbers, route params) over raw pathname strings.
 
 ============================================================
 2) Runes + state management
@@ -47,6 +50,14 @@ You are an expert SvelteKit engineer. Follow these rules ALWAYS when generating 
 - $effect must be cleanup-safe:
   - Always return cleanup functions when subscribing to listeners.
   - Prevent duplicate subscriptions in dev/HMR.
+- $effect dependency tracking is synchronous only:
+  - Svelte 5 only tracks reactive reads that happen synchronously in the $effect body.
+  - Any reactive value read inside an async callback (.then(), await, setTimeout) is NOT tracked.
+  - If an $effect needs to re-run when a reactive value changes, read it into a local variable at the TOP of the effect body, before any async code.
+  - Example: `$effect(() => { const path = page.url.pathname; void fetchData().then(() => { /* use path here */ }); });`
+- Layout guards that gate children rendering must account for all valid sub-states:
+  - If a layout conditionally renders `{@render children()}`, ensure every legitimate child route has a state that passes the gate.
+  - Example: onboarding pages must render even when onboarding status is 'incomplete'.
 
 ============================================================
 3) TypeScript rules
@@ -182,6 +193,30 @@ This project uses sveltekit-superforms with Zod validation and shadcn-svelte for
   - preserve intent on auth redirect (use `next=` query param)
   - return the user to `next` after successful login
 - Never block public pages behind global auth loading; gate only protected sections.
+
+============================================================
+9.1) Onboarding flow conventions (mandatory when enabled)
+============================================================
+- Use a single onboarding feature flag source of truth in `src/lib/config/features.ts`:
+  - `featureFlags.enableOnboarding`
+  - never hardcode onboarding toggles in route files.
+- Define onboarding steps as config, not scattered constants:
+  - keep step metadata in `onboardingSteps`
+  - derive count from `onboardingStepCount`
+  - resolve paths with `getOnboardingStepPath(...)`.
+- Keep onboarding persistence in `src/lib/supabase/profiles.ts` helpers:
+  - read with `getCurrentUserProfile()`
+  - save progress with `saveOnboardingStep(...)`
+  - complete with `completeOnboarding()`
+  - compute routing state with `isOnboardingComplete(...)` and `getNextOnboardingStep(...)`.
+- Enforce onboarding in protected layout flow, not per page:
+  - mandatory check belongs in `src/routes/(protected)/app/+layout.svelte`
+  - route identification belongs in `isOnboardingRoute(...)` guard helper.
+- Onboarding pages must prefill from `user_profiles` when values exist.
+- Onboarding steps must prevent skipping forward by redirecting to the required step.
+- Keep onboarding UI compact and centered with shared wrapper component:
+  - use `src/lib/components/onboarding/onboarding-shell.svelte` for logo, step indicator, title/subtext, and content slot.
+- Onboarding schema changes must be tracked in SQL migrations under `supabase/migrations/` and documented in `README.md`.
 
 ============================================================
 10) Accessibility + semantics
