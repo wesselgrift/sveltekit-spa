@@ -1,12 +1,14 @@
 <script lang="ts">
-    /**
-     * Public Homepage
-     * 
-     * Landing page with hero section and navigation to signup/login.
-     * Publicly accessible, no auth required.
-     */
+	/**
+	 * Public Homepage
+	 *
+	 * Landing page with hero section. Shows signup/login for guests and
+	 * a single app entry CTA when a session already exists.
+	 */
 
-    import { Button } from "$lib/components/ui/button"
+	import { authState } from '$lib/auth';
+	import { Button } from '$lib/components/ui/button';
+	import { Spinner } from '$lib/components/ui/spinner';
 </script>
 
 <!-- Landing page hero section -->
@@ -22,14 +24,27 @@
 			</p>
 		</div>
 
-		<!-- Call-to-action buttons -->
-		<div class="flex flex-col md:flex-row gap-4 mx-auto max-w-xs justify-center">
-			<Button href="/signup" size="lg">
-				Create account
-			</Button>
-			<Button href="/login" variant="outline" size="lg">
-				Log in
-			</Button>
+		<!-- Call-to-action: auth-aware so returning users are not nudged to sign up again -->
+		<div
+			class="mx-auto flex min-h-10 max-w-xs flex-col justify-center gap-4 md:flex-row md:items-center"
+		>
+			{#if authState.loading}
+				<div class="flex justify-center" aria-busy="true">
+					<Spinner class="size-6" />
+					<span class="sr-only">Checking sign-in status</span>
+				</div>
+			{:else if authState.user}
+				<Button href="/app" variant="outline" size="lg" class="w-full md:w-auto">
+					Go to app
+				</Button>
+			{:else}
+				<Button href="/signup" size="lg" class="w-full md:w-auto">
+					Create account
+				</Button>
+				<Button href="/login" variant="outline" size="lg" class="w-full md:w-auto">
+					Log in
+				</Button>
+			{/if}
 		</div>
 
 		<!-- GitHub repository link -->
