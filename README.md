@@ -19,17 +19,23 @@ Everything you don't want to spend time on when prototyping or building an MVP �
 - Protected route group with auth + email verification guards
 - Optional multi-step onboarding flow (feature-flagged, config-driven)
 
-## MCP Servers (Cursor)
+## Cursor Configuration
 
-This project uses MCP servers in Cursor to improve development workflows and keep implementation aligned with framework and data best practices.
+This project includes Cursor rules, skills, and MCP server integrations that keep AI-assisted development aligned with the project's conventions and security requirements.
 
-- **Supabase MCP**
-  - Use for database/auth inspection, policy checks, and schema awareness.
-  - Treat as **read-only by default**.
-  - Only run mutating operations (writes/deletes/schema changes) when explicitly intended and reviewed.
-- **Svelte MCP**
-  - Use for Svelte/SvelteKit development guidance and API-accurate docs.
-  - Preferred workflow: `list-sections` -> `get-documentation` (all relevant sections) -> `svelte-autofixer` until no issues remain.
+### Rules (`.cursor/rules/`)
+
+- **`sveltekit-spa.mdc`** — Primary project rules covering SvelteKit conventions, runes, TypeScript, Supabase auth/database patterns, shadcn-svelte usage, form handling, onboarding flow, accessibility, error handling, and code style. Always applied.
+- **`engineering-patterns.mdc`** — Classic engineering patterns (Factory, Repository, Service Layer, Singleton, Strategy, Observer, Adapter) adapted for a SvelteKit SPA with Supabase. Applied on demand when structuring new features.
+
+### Skills (`.cursor/skills/`)
+
+- **`security-review`** — Security review and hardening guidance for the SvelteKit SPA + Supabase stack. Covers RLS policies, auth flows, XSS prevention, input validation, open redirect prevention, session management, and a deployment checklist. Invoke with `/security-review` to scan for vulnerabilities.
+
+### MCP Servers
+
+- **Supabase MCP** — Database/auth inspection, policy checks, and schema awareness. Treat as **read-only by default**. Only run mutating operations when explicitly intended and reviewed.
+- **Svelte MCP** — Svelte/SvelteKit development guidance and API-accurate docs. Preferred workflow: `list-sections` -> `get-documentation` (all relevant sections) -> `svelte-autofixer` until no issues remain.
 
 ## Route Structure
 
@@ -68,9 +74,14 @@ src/lib/
 │   └── types.ts
 ├── config/
 │   └── features.ts              # feature flags + onboarding step config
+├── helpers/
+│   ├── name-helpers.ts          # display name formatting
+│   └── redirect-helpers.ts      # safe redirect validation (open redirect prevention)
+├── services/
+│   └── onboarding-service.ts    # onboarding business logic (Result-based)
 ├── supabase/
 │   ├── client.ts                # browser Supabase client
-│   └── profiles.ts              # user_profiles helpers + account deletion RPC
+│   └── profiles.ts              # user_profiles helpers + RPCs
 └── components/
     ├── auth/
     ├── account/
@@ -132,7 +143,7 @@ Recommended configuration:
 
 ### 4) Database setup (`user_profiles` + RLS)
 
-Run the migration in the Supabase SQL editor, or apply it via the Supabase CLI:
+Run migrations in the Supabase SQL editor, or apply all at once via the CLI with `npx supabase db push` (requires `npx supabase link` first).
 
 `supabase/migrations/20260316110000_create_user_profiles.sql`
 
@@ -208,7 +219,15 @@ revoke all on function public.delete_current_user() from public;
 grant execute on function public.delete_current_user() to authenticated;
 ```
 
-### 6) Run locally
+### 6) Security hardening migrations
+
+Apply these in order after the base schema. They add defense-in-depth constraints at the database level:
+
+- `supabase/migrations/20260321000000_add_text_length_constraints.sql` — `CHECK` constraints on all user-facing text columns
+- `supabase/migrations/20260321000001_harden_delete_current_user_rpc.sql` — explicit `auth.uid()` assertion in the `delete_current_user` RPC
+- `supabase/migrations/20260321000002_restrict_onboarding_completion.sql` — column-level UPDATE restriction on `onboarding_completed_at` + `complete_onboarding` RPC with step verification
+
+### 7) Run locally
 
 ```bash
 npm run dev
@@ -243,12 +262,21 @@ Edit the `onboardingSteps` array in `src/lib/config/features.ts` to change quest
 - The Zod schema in `src/lib/components/onboarding/onboarding-schemas.ts`
 - The `user_profiles` columns in the onboarding migration
 
-## Security Model (Supabase equivalent of Firestore rules)
+## Security Model
 
-- Browser uses `PUBLIC_SUPABASE_PUBLISHABLE_KEY` (expected and safe)
-- Every data operation is constrained by Postgres **RLS policies**
-- Ownership checks should rely on `auth.uid()`
-- Never use the `service_role` key in frontend code
+The browser is untrusted. Supabase (Postgres RLS + Auth) is the only enforcement point. Client-side checks (auth guards, Zod schemas, route gating) improve UX but provide zero security.
+
+- `PUBLIC_SUPABASE_PUBLISHABLE_KEY` is safe to expose — it can only do what RLS allows
+- RLS policies scope every query to `auth.uid()`
+- `security definer` RPCs assert `auth.uid() IS NOT NULL` and are restricted to the `authenticated` role
+- Column-level `GRANT` restricts which columns users can update directly
+- `CHECK` constraints enforce string length limits at the database level, matching client-side Zod `max()` limits
+- Auth error messages are mapped to generic text — raw Supabase errors are never exposed to users
+- Redirect targets (`next=` query parameter) are validated with `getSafeRedirect()` to prevent open redirects
+- Destructive actions (password change, email change, account deletion) require current password re-authentication
+- The `service_role` key is never used in frontend code
+
+Use `/security-review` in Cursor to scan for vulnerabilities against the full checklist.
 
 Useful policy audit query:
 
