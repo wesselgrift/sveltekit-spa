@@ -7,9 +7,11 @@
      * when user is authenticated and email verified.
      */
 
+	import { untrack } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { useProtectedRoute, isOnboardingRoute } from '$lib/auth/guards';
+	import { AppNavbar } from '$lib/components/navigation';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { Alert, AlertTitle, AlertDescription } from '$lib/components/ui/alert';
 	import { featureFlags, getOnboardingStepByPath, getOnboardingStepPath } from '$lib/config/features';
@@ -38,6 +40,16 @@
 
 		if (status !== 'authenticated') {
 			onboardingStatus = 'idle';
+			return;
+		}
+
+		// Once onboarding is confirmed complete, skip re-fetching on subsequent navigations.
+		// Use untrack to read onboardingStatus without making it a dependency of this effect.
+		const alreadyComplete = untrack(() => onboardingStatus === 'complete');
+		if (alreadyComplete) {
+			if (isOnboardingRoute(currentPath)) {
+				void goto('/app');
+			}
 			return;
 		}
 
@@ -93,9 +105,11 @@
 	</div>
 {:else if status === 'authenticated'}
 	{#if !onboardingEnabled || onboardingStatus === 'complete' || (onboardingStatus === 'incomplete' && viewingOnboardingRoute)}
-		<!-- Render protected content only when onboarding is complete -->
-		{@render children()}
-	{:else if onboardingStatus === 'error'}
+        {#if !viewingOnboardingRoute}
+			<AppNavbar />
+		{/if}
+        {@render children()}
+    {:else if onboardingStatus === 'error'}
 		<div class="flex items-center justify-center min-h-screen p-4">
 			<Alert variant="destructive" class="w-full max-w-md">
 				<AlertTitle>Unable to continue onboarding</AlertTitle>

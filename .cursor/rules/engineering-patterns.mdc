@@ -1,0 +1,446 @@
+---
+description: >-
+  Classic engineering patterns applied to SvelteKit + TypeScript + Supabase projects.
+  Use when structuring a SvelteKit app, organizing data access, abstracting third-party
+  services, managing shared state, improving testability, or when the user describes a
+  problem that a Factory, Repository, Service Layer, Singleton, Strategy, Observer, or
+  Adapter pattern would solve.
+alwaysApply: false
+---
+
+# Engineering Patterns for SvelteKit
+
+This project runs in SPA mode (`ssr = false`). All code executes in the browser — there are no server routes, server hooks, or server-side rendering.
+
+SPA implications for pattern selection:
+- Module-level singletons are safe (one user per tab, no cross-request leakage).
+- Strategies wrap client-side SDKs or call external APIs/edge functions.
+- Observer patterns use Svelte 5 runes; event buses are client-side only.
+- Services and repositories run entirely in the browser via the Supabase client SDK.
+- If the project ever migrates to SSR, re-evaluate Singleton and Observer patterns for per-request safety.
+
+Composition flow — patterns layer in one direction:
+
+```
+Component → Service → Repository → Adapter (wraps SDK)
+                                  ↑
+                            Singleton (shared client)
+```
+
+Components call services. Services enforce business rules and call repositories. Repositories abstract data access. Adapters wrap third-party SDKs. Singletons provide shared client instances. Strategies and Factories are cross-cutting — used wherever swappable behavior or complex construction is needed.
+
+============================================================
+1) Factory — centralized object creation
+============================================================
+Use a factory when constructing objects requires conditional logic, defaults, or async setup that callers should not repeat.
+
+- Export a plain function (or async function) that returns a fully configured instance.
+- Keep construction details hidden; callers receive a typed result.
+- Prefer a factory over a class constructor when multiple creation paths exist.
+- For costly async setup (remote config, auth token exchange), await the factory once at init time and reuse the result.
+
+```typescript
+// src/lib/api/create-api-client.ts
+import type { ApiClient } from './types';
+
+// Async factory — resolves auth headers before returning a ready client.
+export async function createApiClient(baseUrl: string): Promise<ApiClient> {
+  const token = await fetchServiceToken();
+  const headers = { Authorization: `Bearer ${token}` };
+
+  return {
+    get: async (path) => fetch(`${baseUrl}${path}`, { headers }).then((r) => r.json()),
+    post: async (path, body) =>
+      fetch(`${baseUrl}${path}`, {
+        method: 'POST',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      }).then((r) => r.json()),
+  };
+}
+```
+
+Avoid:
+- Scattering construction logic across multiple call sites — centralize it in the factory.
+- Returning partially initialized objects — the factory's output must be ready to use.
+
+============================================================
+2) Repository — data access abstraction
+============================================================
+Encapsulate all Supabase table operations behind a repository interface so business logic never depends on Supabase directly.
+
+- Define an interface describing the data operations (find, create, update, delete).
+- Implement with Supabase queries; export the concrete implementation as the default.
+- For tests, provide a mock factory that satisfies the same interface with in-memory storage.
+- Place repositories in `src/lib/database/repositories/`.
+- Select only the columns you need — avoid `select('*')`.
+- Let Supabase errors propagate — the service layer is responsible for catching and transforming them.
+
+```typescript
+// src/lib/database/repositories/types.ts
+export interface ProjectRepository {
+  findById(id: string): Promise<Project | null>;
+  findByOwner(ownerId: string): Promise<Project[]>;
+  create(data: CreateProjectInput): Promise<Project>;
+  update(id: string, data: UpdateProjectInput): Promise<Project>;
+  remove(id: string): Promise<void>;
+}
+```
+
+```typescript
+// src/lib/database/repositories/project-repository.ts
+import { supabase } from '$lib/supabase/client';
+import type { ProjectRepository } from './types';
+
+export const projectRepository: ProjectRepository = {
+  async findById(id) {
+    const { data, error } = await supabase
+      .from('projects')
+      .select('id, name, owner_id, created_at')
+      .eq('id', id)
+      .maybeSingle();
+    if (error) throw error;
+    return data;
+  },
+  // ... remaining methods follow the same shape
+};
+```
+
+```typescript
+// src/lib/database/repositories/project-repository.mock.ts
+import type { ProjectRepository } from './types';
+
+// In-memory mock for unit tests — no Supabase dependency.
+export function createMockProjectRepository(
+  seed: Project[] = []
+): ProjectRepository {
+  const store = new Map(seed.map((p) => [p.id, p]));
+
+  return {
+    async findById(id) {
+      return store.get(id) ?? null;
+    },
+    async findByOwner(ownerId) {
+      return [...store.values()].filter((p) => p.owner_id === ownerId);
+    },
+    async create(data) {
+      const project = {
+        ...data,
+        id: crypto.randomUUID(),
+        created_at: new Date().toISOString(),
+      } as Project;
+      store.set(project.id, project);
+      return project;
+    },
+    async update(id, data) {
+      const existing = store.get(id);
+      if (!existing) throw new Error('Not found');
+      const updated = { ...existing, ...data };
+      store.set(id, updated);
+      return updated;
+    },
+    async remove(id) {
+      store.delete(id);
+    },
+  };
+}
+```
+
+Avoid:
+- Importing `supabase` outside of repository files — keep the SDK boundary here.
+- Adding business logic (validation, authorization) in repositories — that belongs in services.
+
+============================================================
+3) Service Layer — business logic with typed results
+============================================================
+Place domain logic in service modules between components and repositories. Services enforce business rules, orchestrate multiple repositories, and return typed results instead of throwing.
+
+Use a `Result<T>` discriminated union so callers handle success and failure explicitly without try/catch:
+
+```typescript
+// src/lib/types/result.ts
+export type Result<T, E = string> =
+  | { ok: true; data: T }
+  | { ok: false; error: E };
+```
+
+- Place services in `src/lib/services/` or `src/lib/database/services/`.
+- Accept repository dependencies as parameters (with defaults) to enable test injection.
+- Keep services free of Svelte reactivity — they are pure async functions.
+- Catch repository/SDK errors and return a `Result` with a user-friendly error string.
+- Components check `result.ok` and render accordingly — no ambient try/catch needed.
+
+```typescript
+// src/lib/services/project-service.ts
+import { projectRepository } from '$lib/database/repositories/project-repository';
+import type { ProjectRepository } from '$lib/database/repositories/types';
+import type { Result } from '$lib/types/result';
+
+export function createProjectService(repo: ProjectRepository = projectRepository) {
+  return {
+    async getProjectForUser(projectId: string, userId: string): Promise<Result<Project>> {
+      try {
+        const project = await repo.findById(projectId);
+        if (!project) return { ok: false, error: 'Project not found' };
+        if (project.owner_id !== userId) return { ok: false, error: 'Access denied' };
+        return { ok: true, data: project };
+      } catch {
+        return { ok: false, error: 'Failed to load project. Please try again.' };
+      }
+    },
+
+    async createProject(userId: string, name: string): Promise<Result<Project>> {
+      const trimmed = name.trim();
+      if (!trimmed) return { ok: false, error: 'Project name is required' };
+      try {
+        const project = await repo.create({ name: trimmed, owner_id: userId });
+        return { ok: true, data: project };
+      } catch {
+        return { ok: false, error: 'Could not create project. Please try again.' };
+      }
+    },
+  };
+}
+
+export const projectService = createProjectService();
+```
+
+Component usage:
+
+```typescript
+const result = await projectService.createProject(userId, name);
+if (result.ok) {
+  goto(`/app/projects/${result.data.id}`);
+} else {
+  serverError = result.error;
+}
+```
+
+Avoid:
+- Letting raw Supabase/SDK errors reach components — always transform in the service.
+- Putting navigation or reactive state updates inside services — return data and let the component act.
+- Skipping the service layer for "simple" CRUD — it's the natural place to add validation and authorization later.
+
+============================================================
+4) Singleton — module-level clients
+============================================================
+Use ES module scope to provide a single shared instance. This project already follows this pattern for the Supabase client (`src/lib/supabase/client.ts`).
+
+- Export a `const` at module level — ES modules evaluate once, giving you a singleton for free.
+- In this SPA, a module singleton is safe: one user per browser tab.
+- For any new third-party client (analytics, feature-flag SDK, etc.), follow the same pattern: one file, one export, validated env vars at the top.
+
+```typescript
+// src/lib/supabase/client.ts  (already exists — canonical example)
+import { createClient } from '@supabase/supabase-js';
+import { env } from '$env/dynamic/public';
+
+export const supabase = createClient(env.PUBLIC_SUPABASE_URL, env.PUBLIC_SUPABASE_PUBLISHABLE_KEY);
+```
+
+For expensive clients that should not initialize until first use, use a lazy singleton:
+
+```typescript
+// src/lib/analytics/client.ts
+import { env } from '$env/dynamic/public';
+
+let instance: AnalyticsClient | null = null;
+
+export function getAnalyticsClient(): AnalyticsClient {
+  if (!instance) {
+    instance = createExpensiveClient(env.PUBLIC_ANALYTICS_KEY);
+  }
+  return instance;
+}
+```
+
+Avoid:
+- Creating multiple instances of the same client in different files — always import the singleton.
+- Storing user-specific state in a module singleton — use `$state` in a `.svelte.ts` file instead.
+
+============================================================
+5) Strategy — swappable behaviors
+============================================================
+Use the strategy pattern when the same operation can be fulfilled by different implementations selected at runtime or configuration time (e.g. analytics providers, AI model clients, storage backends).
+
+- Define a shared interface for the behavior.
+- Implement each variant in its own file.
+- Select the active strategy via env var, feature flag, or function parameter.
+- Use `$env/dynamic/public` for env-based selection (consistent with this project's conventions).
+
+```typescript
+// src/lib/analytics/types.ts
+export interface AnalyticsProvider {
+  track(event: string, properties?: Record<string, unknown>): void;
+  identify(userId: string, traits?: Record<string, unknown>): void;
+  reset(): void;
+}
+```
+
+```typescript
+// src/lib/analytics/posthog-provider.ts
+import type { AnalyticsProvider } from './types';
+
+export function createPosthogProvider(apiKey: string): AnalyticsProvider {
+  return {
+    track(event, properties) { /* PostHog SDK call */ },
+    identify(userId, traits) { /* PostHog SDK call */ },
+    reset() { /* PostHog SDK call */ },
+  };
+}
+```
+
+```typescript
+// src/lib/analytics/index.ts
+import { env } from '$env/dynamic/public';
+import { createPosthogProvider } from './posthog-provider';
+import { createMixpanelProvider } from './mixpanel-provider';
+import type { AnalyticsProvider } from './types';
+
+const factories: Record<string, (key: string) => AnalyticsProvider> = {
+  posthog: createPosthogProvider,
+  mixpanel: createMixpanelProvider,
+};
+
+let provider: AnalyticsProvider | null = null;
+
+export function getAnalytics(): AnalyticsProvider {
+  if (!provider) {
+    const name = env.PUBLIC_ANALYTICS_PROVIDER || 'posthog';
+    const key = env.PUBLIC_ANALYTICS_KEY;
+    const factory = factories[name];
+    if (!factory || !key) throw new Error(`Analytics misconfigured: provider=${name}`);
+    provider = factory(key);
+  }
+  return provider;
+}
+```
+
+Avoid:
+- Hardcoding provider selection with if/else chains in consuming code — centralize it in the strategy resolver.
+- Leaking provider-specific types outside the strategy boundary — all consumers import only your interface.
+
+============================================================
+6) Observer — reactive subscriptions
+============================================================
+In this SPA, Svelte 5 runes (`$state`, `$derived`, `$effect`) are the primary observer mechanism. Use them for all UI-reactive state. For decoupled cross-component events that don't map cleanly to shared state, use a lightweight typed event bus.
+
+Runes (primary approach):
+- This project uses `$state` in `src/lib/auth/state.svelte.ts` — follow that pattern.
+- Export a `$state` object, update it from async functions, let components read it reactively.
+- Use `$derived` for computed values that depend on reactive state.
+
+Event bus (for fire-and-forget notifications between unrelated modules):
+- Useful when multiple unrelated modules need to react to an event without coupling via shared state.
+- Keep the bus typed. Since this is an SPA, one bus instance lives for the tab's lifetime.
+
+```typescript
+// src/lib/events/event-bus.ts
+type Handler<T> = (payload: T) => void;
+
+export function createEventBus<EventMap extends Record<string, unknown>>() {
+  const listeners = new Map<keyof EventMap, Set<Handler<unknown>>>();
+
+  return {
+    on<K extends keyof EventMap>(event: K, handler: Handler<EventMap[K]>): () => void {
+      if (!listeners.has(event)) listeners.set(event, new Set());
+      const set = listeners.get(event)!;
+      set.add(handler as Handler<unknown>);
+      return () => { set.delete(handler as Handler<unknown>); };
+    },
+    emit<K extends keyof EventMap>(event: K, payload: EventMap[K]): void {
+      listeners.get(event)?.forEach((fn) => fn(payload));
+    },
+  };
+}
+```
+
+Always clean up subscriptions inside `$effect` to prevent leaks during HMR and component unmount:
+
+```svelte
+<script lang="ts">
+  import { appEvents } from '$lib/events/app-events';
+
+  $effect(() => {
+    const unsubscribe = appEvents.on('project:created', (payload) => {
+      // handle event
+    });
+    return unsubscribe;
+  });
+</script>
+```
+
+Avoid:
+- Subscribing in `$effect` without returning the unsubscribe function — causes listener leaks in dev/HMR.
+- Using an event bus for state that the UI reads continuously — use `$state` instead.
+- Reaching for legacy Svelte stores (`writable`, `readable`) — use runes.
+
+============================================================
+7) Adapter — wrapping third-party SDKs
+============================================================
+Wrap every third-party SDK behind a thin adapter interface you own. This isolates vendor lock-in, simplifies testing, and keeps import paths consistent.
+
+- The adapter interface lives in your codebase (`src/lib/<domain>/types.ts`).
+- The concrete adapter imports the vendor SDK and maps to your interface.
+- The rest of the app imports only your adapter, never the vendor SDK directly.
+- When a second backend is needed, implement the same interface and swap via strategy or config.
+
+```typescript
+// src/lib/storage/types.ts
+export interface FileStorage {
+  upload(path: string, file: File): Promise<{ url: string }>;
+  remove(path: string): Promise<void>;
+  getPublicUrl(path: string): string;
+}
+```
+
+```typescript
+// src/lib/storage/supabase-storage.ts
+import { supabase } from '$lib/supabase/client';
+import type { FileStorage } from './types';
+
+export const supabaseStorage: FileStorage = {
+  async upload(path, file) {
+    const { error } = await supabase.storage.from('uploads').upload(path, file);
+    if (error) throw error;
+    return { url: supabaseStorage.getPublicUrl(path) };
+  },
+  async remove(path) {
+    const { error } = await supabase.storage.from('uploads').remove([path]);
+    if (error) throw error;
+  },
+  getPublicUrl(path) {
+    return supabase.storage.from('uploads').getPublicUrl(path).data.publicUrl;
+  },
+};
+```
+
+Avoid:
+- Importing vendor SDKs directly in components or services — always go through the adapter.
+- Leaking vendor-specific error types past the adapter boundary — catch and rethrow as your own domain errors.
+
+============================================================
+Summary — when to reach for each pattern
+============================================================
+| Problem                                        | Pattern         |
+|------------------------------------------------|-----------------|
+| Complex or conditional object construction     | Factory         |
+| Isolating data access from business logic      | Repository      |
+| Orchestrating rules across multiple data calls | Service Layer   |
+| Ensuring one instance of a client/resource     | Singleton       |
+| Runtime-switchable behavior                    | Strategy        |
+| Reactive state or decoupled event notification | Observer        |
+| Insulating code from third-party SDK changes   | Adapter         |
+
+============================================================
+Anti-patterns — signs you are misapplying a pattern
+============================================================
+- A repository contains business validation or authorization → move to service layer.
+- A component imports `supabase` directly → introduce a repository or adapter.
+- A service mutates `$state` or calls `goto()` → return data/results and let the component act.
+- Multiple files create their own instance of the same SDK client → extract a singleton.
+- An event bus carries state that the UI reads on every render → replace with `$state`.
+- A third-party SDK is imported in more than two files → wrap it in an adapter.
+- A factory is used where a plain object literal would suffice → skip the factory.
+
+END PATTERNS
