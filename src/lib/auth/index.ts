@@ -18,6 +18,7 @@ export {
 	sendVerificationEmail,
 	resendSignupVerification,
 	logout,
+	performLogout,
 	changeEmail,
 	changePassword,
 	deleteAccount,

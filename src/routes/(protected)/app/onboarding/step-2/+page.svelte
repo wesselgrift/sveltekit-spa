@@ -16,7 +16,7 @@
 		getOnboardingStepPath,
 		onboardingStepCount
 	} from '$lib/config/features';
-	import { completeOnboarding, getCurrentUserProfile, getNextOnboardingStep } from '$lib/supabase/profiles';
+	import { prefillStep, finishOnboarding } from '$lib/services/onboarding-service';
 	import { defaults, superForm } from 'sveltekit-superforms';
 	import { zod4 } from 'sveltekit-superforms/adapters';
 	import { onMount } from 'svelte';
@@ -38,18 +38,18 @@
 				return;
 			}
 
-			try {
-				loading = true;
-				serverError = null;
+			loading = true;
+			serverError = null;
 
-				await completeOnboarding(f.data.favoriteDrink);
+			const result = await finishOnboarding(f.data.favoriteDrink);
+
+			if (result.ok) {
 				await goto('/app');
-			} catch (error) {
-				console.error('Failed to complete onboarding:', error);
-				serverError = 'We could not finish onboarding. Please try again.';
-			} finally {
-				loading = false;
+			} else {
+				serverError = result.error;
 			}
+
+			loading = false;
 		}
 	});
 
@@ -59,28 +59,24 @@
 	onMount(() => {
 		let cancelled = false;
 
-		void getCurrentUserProfile()
-			.then((profile) => {
+		void prefillStep(2, 'favorite_drink')
+			.then((result) => {
 				if (cancelled) {
 					return;
 				}
 
-				if (profile?.favorite_drink) {
-					$formData.favoriteDrink = profile.favorite_drink;
-				}
-
-				const requiredStep = getNextOnboardingStep(profile);
-				if (requiredStep !== 2) {
-					void goto(getOnboardingStepPath(requiredStep));
-				}
-			})
-			.catch((error: unknown) => {
-				if (cancelled) {
+				if (!result.ok) {
+					serverError = result.error;
 					return;
 				}
 
-				console.error('Failed to prefill onboarding step 2:', error);
-				serverError = 'We could not load your onboarding data. Please refresh and try again.';
+				if (result.data.prefillValue) {
+					$formData.favoriteDrink = result.data.prefillValue;
+				}
+
+				if (!result.data.isCorrectStep) {
+					void goto(getOnboardingStepPath(result.data.requiredStep));
+				}
 			})
 			.finally(() => {
 				if (!cancelled) {

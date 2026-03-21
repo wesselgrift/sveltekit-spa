@@ -4,6 +4,7 @@
  * This file contains all authentication action functions.
  */
 
+import { goto } from '$app/navigation';
 import { authState } from './state.svelte';
 import type { AuthUser } from './types';
 import { supabase } from '$lib/supabase/client';
@@ -13,6 +14,7 @@ import {
 	syncProfileForCurrentUser,
 	upsertUserProfile
 } from '$lib/supabase/profiles';
+import type { Result } from '$lib/types/result';
 
 function getRedirectUrl(path: string): string | undefined {
 	if (typeof window === 'undefined') {
@@ -201,6 +203,17 @@ export async function logout(): Promise<void> {
 	const { error } = await supabase.auth.signOut();
 	if (error) {
 		throw error;
+	}
+}
+
+// Signs out and redirects to login. Returns a Result so callers can show errors.
+export async function performLogout(): Promise<Result<void>> {
+	try {
+		await logout();
+		void goto('/login');
+		return { ok: true, data: undefined };
+	} catch {
+		return { ok: false, error: 'Logout failed. Please try again.' };
 	}
 }
 

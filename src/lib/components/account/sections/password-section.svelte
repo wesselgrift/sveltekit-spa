@@ -6,8 +6,7 @@
 	 * Requires current password for submit
 	 */
 
-	import { changePassword, logout } from '$lib/auth/actions';
-	import { goto } from '$app/navigation';
+	import { changePassword, performLogout } from '$lib/auth/actions';
 	import { getAuthErrorMessage } from '$lib/auth/errors';
 	import * as Form from '$lib/components/ui/form';
 	import { Input } from '$lib/components/ui/input';
@@ -39,10 +38,9 @@
 
 					success = true;
 
-					// Close form after a delay to show success message
 					setTimeout(() => {
 						closeEditForm();
-						handleLogout();
+						void performLogout();
 					}, 3000);
 				} catch (err) {
 					serverError = getAuthErrorMessage(err);
@@ -71,17 +69,6 @@
 		serverError = null;
 	}
 
-	async function handleLogout(): Promise<void> {
-		try {
-			await logout();
-			// Redirect to login page after logout
-			// The auth guard will handle this automatically, but explicit redirect is clearer
-			goto('/login');
-		} catch (error) {
-			console.error('Logout error:', error);
-			// Reset logging out state on error so user can try again
-		}
-	}
 </script>
 
 <div class="flex flex-col border-b">

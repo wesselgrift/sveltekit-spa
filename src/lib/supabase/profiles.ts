@@ -3,7 +3,6 @@
  */
 
 import { supabase } from './client';
-import { onboardingStepCount } from '$lib/config/features';
 
 export interface UserProfile {
 	id: string;
@@ -94,47 +93,6 @@ export async function updateCurrentUserProfile(values: UserProfileUpdate): Promi
 	if (error) {
 		throw error;
 	}
-}
-
-// Persists one onboarding step field and marks progress.
-export async function saveOnboardingStep(
-	stepNumber: number,
-	field: 'favorite_fruit' | 'favorite_drink',
-	value: string
-): Promise<void> {
-	await updateCurrentUserProfile({
-		[field]: value,
-		onboarding_step: stepNumber
-	});
-}
-
-// Completes onboarding with the final step field and completion timestamp.
-export async function completeOnboarding(finalValue: string): Promise<void> {
-	await updateCurrentUserProfile({
-		favorite_drink: finalValue,
-		onboarding_step: onboardingStepCount,
-		onboarding_completed_at: new Date().toISOString()
-	});
-}
-
-// Returns true when onboarding has explicitly been marked complete.
-export function isOnboardingComplete(profile: UserProfile | null): boolean {
-	return Boolean(profile?.onboarding_completed_at);
-}
-
-// Computes the next required onboarding step, clamped to the configured range.
-export function getNextOnboardingStep(profile: UserProfile | null): number {
-	if (!profile) {
-		return 1;
-	}
-
-	if (isOnboardingComplete(profile)) {
-		return onboardingStepCount;
-	}
-
-	const savedStep = profile.onboarding_step ?? 0;
-	const nextStep = Math.min(Math.max(savedStep + 1, 1), onboardingStepCount);
-	return nextStep;
 }
 
 // Deletes the current user's profile record by auth uid.

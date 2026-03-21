@@ -15,11 +15,7 @@
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { Alert, AlertTitle, AlertDescription } from '$lib/components/ui/alert';
 	import { featureFlags, getOnboardingStepByPath, getOnboardingStepPath } from '$lib/config/features';
-	import {
-		getCurrentUserProfile,
-		getNextOnboardingStep,
-		isOnboardingComplete
-	} from '$lib/supabase/profiles';
+	import { getOnboardingStatus } from '$lib/services/onboarding-service';
 
 	let { children } = $props();
 	const status = $derived(useProtectedRoute());
@@ -56,13 +52,19 @@
 		let cancelled = false;
 		onboardingStatus = 'loading';
 
-		void getCurrentUserProfile()
-			.then((profile) => {
+		void getOnboardingStatus()
+			.then((result) => {
 				if (cancelled) {
 					return;
 				}
 
-				if (isOnboardingComplete(profile)) {
+				if (!result.ok) {
+					console.error('Failed to evaluate onboarding status:', result.error);
+					onboardingStatus = 'error';
+					return;
+				}
+
+				if (result.data.complete) {
 					onboardingStatus = 'complete';
 
 					if (isOnboardingRoute(currentPath)) {
@@ -71,25 +73,16 @@
 					return;
 				}
 
-				const requiredStep = getNextOnboardingStep(profile);
-				const requiredStepPath = getOnboardingStepPath(requiredStep);
+				const requiredStepPath = getOnboardingStepPath(result.data.nextStep);
 				const currentlyOnOnboarding = isOnboardingRoute(currentPath);
 				const currentStep = getOnboardingStepByPath(currentPath);
-				const alreadyOnRequiredStep = currentStep?.stepNumber === requiredStep;
+				const alreadyOnRequiredStep = currentStep?.stepNumber === result.data.nextStep;
 
 				onboardingStatus = 'incomplete';
 
 				if (!currentlyOnOnboarding || !alreadyOnRequiredStep) {
 					void goto(requiredStepPath);
 				}
-			})
-			.catch((error: unknown) => {
-				if (cancelled) {
-					return;
-				}
-
-				console.error('Failed to evaluate onboarding status:', error);
-				onboardingStatus = 'error';
 			});
 
 		return () => {

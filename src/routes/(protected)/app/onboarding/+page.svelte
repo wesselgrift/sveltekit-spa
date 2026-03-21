@@ -8,7 +8,7 @@
 	import { Alert, AlertDescription, AlertTitle } from '$lib/components/ui/alert';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { getOnboardingStepPath } from '$lib/config/features';
-	import { getCurrentUserProfile, getNextOnboardingStep } from '$lib/supabase/profiles';
+	import { getOnboardingStatus } from '$lib/services/onboarding-service';
 	import { onMount } from 'svelte';
 
 	let loading = $state(true);
@@ -17,23 +17,20 @@
 	onMount(() => {
 		let cancelled = false;
 
-		void getCurrentUserProfile()
-			.then((profile) => {
+		void getOnboardingStatus()
+			.then((result) => {
 				if (cancelled) {
 					return;
 				}
 
-				const requiredStep = getNextOnboardingStep(profile);
-				void goto(getOnboardingStepPath(requiredStep));
-			})
-			.catch((error: unknown) => {
-				if (cancelled) {
+				if (!result.ok) {
+					console.error('Failed to resolve onboarding destination:', result.error);
+					serverError = result.error;
+					loading = false;
 					return;
 				}
 
-				console.error('Failed to resolve onboarding destination:', error);
-				serverError = 'We could not continue onboarding. Please refresh and try again.';
-				loading = false;
+				void goto(getOnboardingStepPath(result.data.nextStep));
 			});
 
 		return () => {
