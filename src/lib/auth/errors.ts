@@ -26,13 +26,5 @@ export function getAuthErrorMessage(error: unknown): string {
 		}
 	}
 
-	if (error && typeof error === 'object' && 'message' in error) {
-		const messageValue = (error as { message?: unknown }).message;
-		if (typeof messageValue === 'string' && messageValue.length > 0) {
-			// Fallback to provider message only if we cannot map a known code.
-			return messageValue;
-		}
-	}
-
 	return 'An error occurred. Please try again.';
 }

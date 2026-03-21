@@ -28,7 +28,7 @@
 	});
 </script>
 
-<nav class="border-b bg-secondary">
+<nav class="border-b bg-secondary/30">
 	<div class="container mx-auto flex items-center justify-between px-6 h-14">
 		<div class="flex items-center">
 			<a href="/app" class="text-lg font-semibold tracking-tight hover:text-foreground/80">SvelteKit SPA</a>

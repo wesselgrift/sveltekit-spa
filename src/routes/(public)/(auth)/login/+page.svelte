@@ -9,6 +9,7 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { authState } from '$lib/auth';
+	import { getSafeRedirect } from '$lib/helpers';
     import { Logo } from '$lib/components/ui/logo';
     import { Spinner } from '$lib/components/ui/spinner';
     import { Login as LoginForm } from '$lib/components/auth';
@@ -24,7 +25,7 @@
         }
 
         if (authState.user.emailVerified) {
-            void goto(nextParam ?? '/app');
+            void goto(getSafeRedirect(nextParam));
         } else {
             void goto(`/verify-email${nextQuery}`);
         }

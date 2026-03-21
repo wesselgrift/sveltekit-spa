@@ -75,7 +75,6 @@ export interface UserProfileUpdate {
 	favorite_fruit?: string | null;
 	favorite_drink?: string | null;
 	onboarding_step?: number | null;
-	onboarding_completed_at?: string | null;
 }
 
 // Updates the authenticated user's profile row using partial fields.
@@ -98,6 +97,17 @@ export async function updateCurrentUserProfile(values: UserProfileUpdate): Promi
 // Deletes the current user's profile record by auth uid.
 export async function deleteUserProfile(userId: string): Promise<void> {
 	const { error } = await supabase.from('user_profiles').delete().eq('id', userId);
+	if (error) {
+		throw error;
+	}
+}
+
+// Completes onboarding via a security definer RPC that sets the completion
+// timestamp server-side. Direct UPDATE on onboarding_completed_at is revoked.
+export async function completeOnboardingRpc(favoriteDrink: string): Promise<void> {
+	const { error } = await supabase.rpc('complete_onboarding', {
+		p_favorite_drink: favoriteDrink
+	});
 	if (error) {
 		throw error;
 	}

@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
 export const nameSchema = z.object({
-	firstName: z.string().min(1, 'First name is required'),
-	lastName: z.string().min(1, 'Last name is required'),
+	firstName: z.string().min(1, 'First name is required').max(128, 'First name is too long'),
+	lastName: z.string().min(1, 'Last name is required').max(128, 'Last name is too long'),
 });
 
 export const changeEmailSchema = z.object({

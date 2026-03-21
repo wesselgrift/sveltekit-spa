@@ -9,6 +9,7 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { authState } from '$lib/auth';
+	import { getSafeRedirect } from '$lib/helpers';
 	import { Logo } from '$lib/components/ui/logo';
     import { Spinner } from '$lib/components/ui/spinner';
 	import { Signup as SignupForm } from '$lib/components/auth';
@@ -51,7 +52,7 @@
 		// Existing-session can use client-side routing.
 		if (authState.user === null) return;
 		if (authState.user.emailVerified) {
-			void goto(nextParam ?? '/app');
+			void goto(getSafeRedirect(nextParam));
 		} else {
 			void goto(`/verify-email/${nextQuery}`);
 		}

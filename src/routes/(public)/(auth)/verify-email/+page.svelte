@@ -9,6 +9,7 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { authState } from '$lib/auth';
+	import { getSafeRedirect } from '$lib/helpers';
 	import { Logo } from '$lib/components/ui/logo';
 	import { VerifyEmail } from '$lib/components/auth';
 
@@ -32,7 +33,7 @@
 
 		// Verified users skip this page entirely
 		if (authState.user.emailVerified) {
-			goto(nextParam ?? '/app');
+			goto(getSafeRedirect(nextParam));
 		}
 	});
 
@@ -44,7 +45,7 @@
 	};
 
 	const handleVerified = (): void => {
-		goto(nextParam ?? '/app');
+		goto(getSafeRedirect(nextParam));
 	};
 
 	const handleSignOut = (): void => {

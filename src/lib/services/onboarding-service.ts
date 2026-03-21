@@ -7,6 +7,7 @@
 import {
 	getCurrentUserProfile,
 	updateCurrentUserProfile,
+	completeOnboardingRpc,
 	type UserProfile
 } from '$lib/supabase/profiles';
 import { onboardingStepCount, type OnboardingFieldKey } from '$lib/config/features';
@@ -99,14 +100,12 @@ export async function saveStep(
 	}
 }
 
-// Completes onboarding with the final step value and a completion timestamp.
+// Completes onboarding via a server-side RPC that verifies prior steps
+// and sets the completion timestamp. Direct writes to onboarding_completed_at
+// are revoked at the database level.
 export async function finishOnboarding(finalValue: string): Promise<Result<void>> {
 	try {
-		await updateCurrentUserProfile({
-			favorite_drink: finalValue,
-			onboarding_step: onboardingStepCount,
-			onboarding_completed_at: new Date().toISOString()
-		});
+		await completeOnboardingRpc(finalValue);
 
 		return { ok: true, data: undefined };
 	} catch {
