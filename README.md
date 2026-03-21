@@ -141,93 +141,21 @@ Recommended configuration:
   - `https://www.your-domain.dev/reset-password/`
 
 
-### 4) Database setup (`user_profiles` + RLS)
+### 4) Database setup
 
-Run migrations in the Supabase SQL editor, or apply all at once via the CLI with `npx supabase db push` (requires `npx supabase link` first).
+Apply the two migrations in `supabase/migrations/` via the Supabase SQL editor or the CLI:
 
-`supabase/migrations/20260316110000_create_user_profiles.sql`
-
-```sql
-create table if not exists public.user_profiles (
-  id uuid primary key references auth.users (id) on delete cascade,
-  email text,
-  display_name text,
-  created_at timestamptz not null default now()
-);
-
-alter table public.user_profiles enable row level security;
-
-create policy "user_profiles_select_own"
-  on public.user_profiles
-  for select
-  to authenticated
-  using (auth.uid() = id);
-
-create policy "user_profiles_insert_own"
-  on public.user_profiles
-  for insert
-  to authenticated
-  with check (auth.uid() = id);
-
-create policy "user_profiles_update_own"
-  on public.user_profiles
-  for update
-  to authenticated
-  using (auth.uid() = id)
-  with check (auth.uid() = id);
-
-create policy "user_profiles_delete_own"
-  on public.user_profiles
-  for delete
-  to authenticated
-  using (auth.uid() = id);
+```bash
+npx supabase link --project-ref <your-project-ref>
+npx supabase db push
 ```
 
-### 4.1) Onboarding profile columns
+| Migration | What it sets up |
+| --- | --- |
+| `20260321100000_create_user_profiles.sql` | `user_profiles` table with all columns, RLS policies, CHECK constraints, and column-level UPDATE grants |
+| `20260321100001_create_rpcs.sql` | `delete_current_user` and `complete_onboarding` security definer RPCs |
 
-When onboarding is enabled, apply the onboarding migration:
-
-`supabase/migrations/20260316120000_add_onboarding_fields_to_user_profiles.sql`
-
-```sql
-alter table public.user_profiles
-  add column if not exists favorite_fruit text,
-  add column if not exists favorite_drink text,
-  add column if not exists onboarding_step integer,
-  add column if not exists onboarding_completed_at timestamptz;
-```
-
-### 5) Account deletion RPC setup
-
-This app calls `rpc('delete_current_user')` from the browser. Apply the migration:
-
-`supabase/migrations/20260316115000_create_delete_current_user_rpc.sql`
-
-```sql
-create or replace function public.delete_current_user()
-returns void
-language plpgsql
-security definer
-set search_path = public
-as $$
-begin
-  delete from auth.users where id = auth.uid();
-end;
-$$;
-
-revoke all on function public.delete_current_user() from public;
-grant execute on function public.delete_current_user() to authenticated;
-```
-
-### 6) Security hardening migrations
-
-Apply these in order after the base schema. They add defense-in-depth constraints at the database level:
-
-- `supabase/migrations/20260321000000_add_text_length_constraints.sql` — `CHECK` constraints on all user-facing text columns
-- `supabase/migrations/20260321000001_harden_delete_current_user_rpc.sql` — explicit `auth.uid()` assertion in the `delete_current_user` RPC
-- `supabase/migrations/20260321000002_restrict_onboarding_completion.sql` — column-level UPDATE restriction on `onboarding_completed_at` + `complete_onboarding` RPC with step verification
-
-### 7) Run locally
+### 5) Run locally
 
 ```bash
 npm run dev
@@ -248,12 +176,12 @@ This boilerplate includes an optional multi-step onboarding flow that guides new
 ### Enabling onboarding
 
 1. Set `enableOnboarding: true` in `src/lib/config/features.ts` (this is the default).
-2. Apply the onboarding database migration (see step 4.1 in Quick Start above).
+2. The onboarding columns and RPCs are included in the base migrations — no extra setup needed.
 
 ### Disabling onboarding
 
 1. Set `enableOnboarding: false` in `src/lib/config/features.ts`.
-2. The onboarding routes and migration can be left in place — they are inert when the flag is off.
+2. The onboarding routes and database columns can be left in place — they are inert when the flag is off.
 
 ### Customizing steps
 

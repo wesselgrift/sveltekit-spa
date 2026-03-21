@@ -1,12 +1,27 @@
--- Restricts direct client updates to onboarding_completed_at.
--- Only the complete_onboarding RPC can set the completion timestamp,
--- preventing users from bypassing the onboarding flow via direct queries.
+-- Security definer RPCs for operations that require elevated privileges.
+-- Each function asserts auth.uid() and is restricted to the authenticated role.
 
--- Revoke blanket UPDATE and re-grant on allowed columns only.
-revoke update on public.user_profiles from authenticated;
-grant update (email, display_name, favorite_fruit, favorite_drink, onboarding_step) on public.user_profiles to authenticated;
+-- Account self-deletion: removes the auth user row (profile cascades via FK).
+create or replace function public.delete_current_user()
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+	if auth.uid() is null then
+		raise exception 'Not authenticated';
+	end if;
 
--- RPC that atomically completes onboarding after verifying prior steps.
+	delete from auth.users where id = auth.uid();
+end;
+$$;
+
+revoke all on function public.delete_current_user() from public;
+grant execute on function public.delete_current_user() to authenticated;
+
+-- Onboarding completion: verifies prior steps, then atomically sets
+-- favorite_drink, onboarding_step, and onboarding_completed_at.
 create or replace function public.complete_onboarding(p_favorite_drink text)
 returns void
 language plpgsql
