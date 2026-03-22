@@ -143,17 +143,14 @@ Recommended configuration:
 
 ### 4) Database setup
 
-Apply the two migrations in `supabase/migrations/` via the Supabase SQL editor or the CLI:
+Apply the migration in `supabase/migrations/` via the Supabase SQL editor or the CLI:
 
 ```bash
 npx supabase link --project-ref <your-project-ref>
 npx supabase db push
 ```
 
-| Migration | What it sets up |
-| --- | --- |
-| `20260321100000_create_user_profiles.sql` | `user_profiles` table with all columns, RLS policies, CHECK constraints, and column-level UPDATE grants |
-| `20260321100001_create_rpcs.sql` | `delete_current_user` and `complete_onboarding` security definer RPCs |
+The single migration sets up the `user_profiles` table with RLS policies, CHECK constraints, `delete_current_user` and `complete_onboarding` security definer RPCs, and a trigger protecting `onboarding_completed_at` from direct writes.
 
 ### 5) Run locally
 
@@ -197,7 +194,7 @@ The browser is untrusted. Supabase (Postgres RLS + Auth) is the only enforcement
 - `PUBLIC_SUPABASE_PUBLISHABLE_KEY` is safe to expose — it can only do what RLS allows
 - RLS policies scope every query to `auth.uid()`
 - `security definer` RPCs assert `auth.uid() IS NOT NULL` and are restricted to the `authenticated` role
-- Column-level `GRANT` restricts which columns users can update directly
+- A `BEFORE UPDATE` trigger protects `onboarding_completed_at` from direct writes — only the `complete_onboarding` RPC (security definer) can set it
 - `CHECK` constraints enforce string length limits at the database level, matching client-side Zod `max()` limits
 - Auth error messages are mapped to generic text — raw Supabase errors are never exposed to users
 - Redirect targets (`next=` query parameter) are validated with `getSafeRedirect()` to prevent open redirects
