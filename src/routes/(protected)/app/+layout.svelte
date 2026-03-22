@@ -2,9 +2,10 @@
     /**
      * Protected Route Layout
      * 
-     * Guards authenticated routes using useProtectedRoute. Shows loading spinner
-     * during auth check, redirects unauthenticated users, renders children only
-     * when user is authenticated and email verified.
+     * Guards authenticated routes using useProtectedRoute (pure derivation) and
+     * reacts to non-authenticated statuses via $effect for redirects.
+     * Shows loading spinner during auth check, redirects unauthenticated users,
+     * renders children only when user is authenticated and email verified.
      */
 
 	import { untrack } from 'svelte';
@@ -22,7 +23,23 @@
 	const onboardingEnabled = featureFlags.enableOnboarding;
 	const viewingOnboardingRoute = $derived(isOnboardingRoute(page.url.pathname));
 
+	const redirecting = $derived(status === 'needs-auth' || status === 'needs-verification');
 	let onboardingStatus = $state<'idle' | 'loading' | 'complete' | 'incomplete' | 'error'>('idle');
+
+	// Redirects unauthenticated or unverified users to the appropriate auth page.
+	// Only performs the goto() side effect — the redirecting flag is a pure derivation above.
+	$effect(() => {
+		if (status === 'needs-auth') {
+			const destination = page.url.pathname + page.url.search;
+			void goto(`/login?next=${encodeURIComponent(destination)}`);
+			return;
+		}
+
+		if (status === 'needs-verification') {
+			const destination = page.url.pathname + page.url.search;
+			void goto(`/verify-email?next=${encodeURIComponent(destination)}`);
+		}
+	});
 
 	// Enforces onboarding completion before protected content is accessible.
 	// Reading pathname synchronously so the effect re-runs on client-side navigation.
@@ -91,8 +108,7 @@
 	});
 </script>
 
-{#if status === 'loading'}
-	<!-- Show loading state while auth is initializing -->
+{#if status === 'loading' || redirecting}
 	<div class="flex items-center justify-center min-h-screen">
 		<Spinner class="size-6" />
 	</div>
@@ -116,9 +132,4 @@
 			<Spinner class="size-6" />
 		</div>
 	{/if}
-{:else}
-	<!-- Show redirecting state while redirect happens -->
-	<div class="flex items-center justify-center min-h-screen">
-		<Spinner class="size-6" />
-	</div>
 {/if}

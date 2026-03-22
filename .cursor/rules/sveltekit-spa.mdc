@@ -38,11 +38,20 @@ You are an expert SvelteKit engineer. Follow these rules ALWAYS when generating 
 - Never compare pathnames with raw string equality — SvelteKit may add or omit trailing slashes.
   - Always normalize paths before comparing (strip trailing slash if length > 1).
   - Prefer comparing parsed identifiers (e.g., step numbers, route params) over raw pathname strings.
+- Load function invalidation with `depends`/`invalidate`:
+  - When a `+layout.ts` or `+page.ts` load function depends on auth state, call `depends('auth:session')` inside it so it can be re-run on demand.
+  - After login, logout, or any auth state change, call `invalidate('auth:session')` (from `$app/navigation`) to trigger re-runs of every load function that declared the dependency.
+  - This keeps load functions reactive to auth changes without sprinkling manual checks across pages.
+  - The dependency key is a custom string — not a URL. SvelteKit matches it by exact string equality.
 
 ============================================================
 2) Runes + state management
 ============================================================
 - Use Runes ($state, $derived, $effect) and avoid legacy writable stores.
+- $derived must be side-effect free:
+  - Never call `goto()`, network requests, or mutate $state inside $derived.
+  - $derived is for pure computations only — use $effect for side effects that react to derived values.
+  - Example: derive a `redirecting` flag with `$derived(status === 'needs-auth')`, then perform `goto()` in a separate `$effect` that reads `status`.
 - Avoid module-level side effects that register listeners on import (especially auth listeners). Use an explicit init function called once (e.g., from root layout onMount) or idempotent subscription guards.
 - Keep state minimal:
   - Put global app/auth state in src/lib (e.g., src/lib/auth/state.svelte.ts).
@@ -80,7 +89,7 @@ You are an expert SvelteKit engineer. Follow these rules ALWAYS when generating 
 - Name files by responsibility:
   - auth/state.svelte.ts for reactive global state
   - auth/actions.ts for sign-in/sign-out flows
-  - auth/guards.ts for requireAuth/requireVerifiedEmail helpers (if used)
+  - auth/guards.ts for useProtectedRoute/isOnboardingRoute helpers
   - supabase/client.ts for singleton browser client setup
   - database/services/*.ts for domain-specific data operations
 

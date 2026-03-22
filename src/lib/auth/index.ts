@@ -26,7 +26,8 @@ export {
 } from './actions';
 
 // Re-export guards
-export { requireAuth, requireVerifiedEmail } from './guards';
+export { useProtectedRoute, isOnboardingRoute } from './guards';
+export type { GuardStatus } from './guards';
 
 // Re-export error handling
 export { getAuthErrorMessage } from './errors';

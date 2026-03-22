@@ -1,71 +1,28 @@
 /**
  * Auth Guards Module
- * Helper functions for route protection and auth redirects.
+ *
+ * Pure helper functions for evaluating auth status in protected layouts.
+ * These functions are side-effect free — redirects based on the returned
+ * status should be performed in an $effect, not inside the guard itself.
  */
 
-import { goto } from '$app/navigation';
-import { page } from '$app/state';
 import { authState } from './state.svelte';
-import type { Page } from '@sveltejs/kit';
 import { getOnboardingStepByPath } from '$lib/config/features';
 
-export type GuardStatus = 
+export type GuardStatus =
 	| 'loading'
-	| 'redirecting'
 	| 'authenticated'
 	| 'needs-auth'
 	| 'needs-verification';
 
-// Reactive guard for protected route layouts. Handles redirects and returns status.
+// Pure computation of auth status for protected route layouts.
+// Must be used inside $derived — the caller is responsible for
+// reacting to non-authenticated statuses via $effect (e.g. goto).
 export function useProtectedRoute(): GuardStatus {
-	if (authState.loading) {
-		return 'loading';
-	}
-
-	if (authState.user === null) {
-		if (page.url.pathname !== '/login') {
-			const destination = page.url.pathname + page.url.search;
-			goto(`/login?next=${encodeURIComponent(destination)}`);
-			return 'redirecting';
-		}
-		return 'needs-auth';
-	}
-
-	if (!authState.user.emailVerified) {
-		if (page.url.pathname !== '/verify-email') {
-			const destination = page.url.pathname + page.url.search;
-			goto(`/verify-email?next=${encodeURIComponent(destination)}`);
-			return 'redirecting';
-		}
-		return 'needs-verification';
-	}
-
+	if (authState.loading) return 'loading';
+	if (authState.user === null) return 'needs-auth';
+	if (!authState.user.emailVerified) return 'needs-verification';
 	return 'authenticated';
-}
-
-// For use in load functions. Redirects to login if not authenticated.
-export function requireAuth(page: Page): boolean {
-	if (authState.user === null) {
-		const destination = page.url.pathname + page.url.search;
-		goto(`/login?next=${encodeURIComponent(destination)}`);
-		return false;
-	}
-	return true;
-}
-
-// For use in load functions. Checks auth then email verification.
-export function requireVerifiedEmail(page: Page): boolean {
-	if (!requireAuth(page)) {
-		return false;
-	}
-
-	if (authState.user && !authState.user.emailVerified) {
-		const destination = page.url.pathname + page.url.search;
-		goto(`/verify-email?next=${encodeURIComponent(destination)}`);
-		return false;
-	}
-
-	return true;
 }
 
 // Returns true when the pathname matches one of the configured onboarding steps.
