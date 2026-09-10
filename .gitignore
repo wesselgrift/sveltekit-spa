@@ -24,3 +24,10 @@ supabase/.temp
 # Vite
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Fiberplane local issue tracking
+.fp/*
+!.fp/remote.toml
+
+# Claude Code local overrides
+.claude/settings.local.json

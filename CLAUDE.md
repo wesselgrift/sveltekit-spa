@@ -1,0 +1,284 @@
+# SvelteKit SPA — Project Rules
+
+SvelteKit (latest) + Runes + TypeScript + Supabase Auth + Postgres + shadcn-svelte.
+
+Follow these rules when generating or editing code in this repo. General coding
+behavior (simplicity, surgical changes, surfacing assumptions) is covered by the
+`karpathy-guidelines` skill and is not repeated here.
+
+This project runs in SPA mode (`ssr = false`, `adapter-static`). All code executes
+in the browser. There are no server routes, server hooks, or server-side rendering.
+
+## MCP usage (required)
+
+Two MCP servers are configured in `.mcp.json`:
+
+- **Svelte MCP** — use whenever Svelte/SvelteKit development is involved.
+  - Run `list-sections` first, review `use_cases`, then fetch ALL relevant sections via `get-documentation`.
+  - Run `svelte-autofixer` whenever writing or editing Svelte code, and keep running it until no issues or suggestions remain.
+  - Use `playground-link` only when explicitly asked for a playground link, and never when code is being written directly to project files.
+- **Supabase MCP** — use for database/auth inspection and project context. Configured `read_only=true`.
+  - Do not run mutating operations (writes, deletes, schema changes) unless explicitly requested.
+  - Requires OAuth. Run `/mcp` to authenticate.
+
+## 1) SvelteKit conventions
+
+- Use SvelteKit file conventions correctly:
+  - Route components: `+page.svelte`, layouts: `+layout.svelte`, data: `+page.ts`/`+layout.ts`.
+  - Avoid putting business logic in route files; move reusable logic to `src/lib`.
+- In SPA mode (`ssr = false`), do not rely on server-only behavior. Keep Supabase client-side with browser-safe env vars only.
+- Use `$app/navigation` (`goto`) and `$app/state` (`page`, `navigating`, `updated`) for routing concerns.
+  - NEVER use deprecated `$app/stores` — it's for legacy SvelteKit <2.12 only.
+  - Import page from `$app/state`: `import { page } from '$app/state'`
+  - Use `page.url.pathname` directly (no `$` prefix needed — it's already reactive with runes).
+- Redirects/guards must be done in layouts for sections (e.g., protected area), not sprinkled across many pages.
+- Never compare pathnames with raw string equality — SvelteKit may add or omit trailing slashes.
+  - Always normalize paths before comparing (strip trailing slash if length > 1).
+  - Prefer comparing parsed identifiers (e.g., step numbers, route params) over raw pathname strings.
+- Load function invalidation with `depends`/`invalidate`:
+  - When a `+layout.ts` or `+page.ts` load function depends on auth state, call `depends('auth:session')` inside it so it can be re-run on demand.
+  - After login, logout, or any auth state change, call `invalidate('auth:session')` (from `$app/navigation`) to trigger re-runs of every load function that declared the dependency.
+  - This keeps load functions reactive to auth changes without sprinkling manual checks across pages.
+  - The dependency key is a custom string — not a URL. SvelteKit matches it by exact string equality.
+
+## 2) Runes + state management
+
+- Use Runes (`$state`, `$derived`, `$effect`) and avoid legacy writable stores.
+- `$derived` must be side-effect free:
+  - Never call `goto()`, network requests, or mutate `$state` inside `$derived`.
+  - `$derived` is for pure computations only — use `$effect` for side effects that react to derived values.
+  - Example: derive a `redirecting` flag with `$derived(status === 'needs-auth')`, then perform `goto()` in a separate `$effect` that reads `status`.
+- Avoid module-level side effects that register listeners on import (especially auth listeners). Use an explicit init function called once (e.g., from root layout `onMount`) or idempotent subscription guards.
+- Keep state minimal:
+  - Put global app/auth state in `src/lib` (e.g., `src/lib/auth/state.svelte.ts`).
+  - Keep page-local state inside the page component unless it must be shared.
+- `$effect` must be cleanup-safe:
+  - Always return cleanup functions when subscribing to listeners.
+  - Prevent duplicate subscriptions in dev/HMR.
+- `$effect` dependency tracking is synchronous only:
+  - Svelte 5 only tracks reactive reads that happen synchronously in the `$effect` body.
+  - Any reactive value read inside an async callback (`.then()`, `await`, `setTimeout`) is NOT tracked.
+  - If an `$effect` needs to re-run when a reactive value changes, read it into a local variable at the TOP of the effect body, before any async code.
+  - Example: `$effect(() => { const path = page.url.pathname; void fetchData().then(() => { /* use path here */ }); });`
+- Layout guards that gate children rendering must account for all valid sub-states:
+  - If a layout conditionally renders `{@render children()}`, ensure every legitimate child route has a state that passes the gate.
+  - Example: onboarding pages must render even when onboarding status is `'incomplete'`.
+
+## 3) TypeScript rules
+
+- Strict TypeScript: no `any`. Prefer `unknown` + narrowing when necessary.
+- Export types for public APIs and reuse them consistently.
+- Use explicit return types on exported functions.
+- Prefer small, typed helper functions over inline logic in components.
+
+## 4) Folder structure + naming
+
+Keep shared code in `src/lib`:
+
+- `src/lib/supabase/*` — Supabase client config and profile/table access helpers
+- `src/lib/auth/*` — auth state + actions + guards + error mapping
+- `src/lib/services/*` — domain services wrapping Supabase calls, returning `Result<T>`
+- `src/lib/components/*` — reusable components
+- `src/lib/components/ui/*` — shadcn-svelte components (unmodified copies unless clearly documented)
+- `src/lib/helpers/*` — pure utility functions
+- `src/lib/config/*` — feature flags and config-driven definitions
+- `src/lib/types/*` — shared types (e.g., `Result<T>`)
+- `src/lib/utils.ts` — `cn()` and shadcn type helpers
+
+Name files by responsibility:
+
+- `auth/state.svelte.ts` for reactive global state
+- `auth/actions.ts` for sign-in/sign-out flows
+- `auth/guards.ts` for `useProtectedRoute`/`isOnboardingRoute` helpers
+- `supabase/client.ts` for singleton browser client setup
+- `supabase/profiles.ts` for `user_profiles` reads/writes and RPC calls
+- `services/*-service.ts` for domain-specific business logic
+
+## 5) shadcn-svelte (UI kit) rules
+
+- Prefer shadcn-svelte components for consistent design:
+  - Buttons, inputs, labels, cards, dialogs, dropdowns, toasts, tabs, tables, spinners, etc.
+- Import path conventions:
+  - Always import shadcn components from `src/lib/components/ui/*`
+  - Example: `import { Button } from "$lib/components/ui/button";`
+- Do NOT rewrite or "simplify" shadcn component internals unless explicitly requested.
+  - If changes are necessary, comment WHY and keep diffs minimal.
+- Styling:
+  - Prefer Tailwind utility classes on the consuming component over editing UI primitives.
+  - Use `cn()` utility for conditional classes if available in the project.
+- Composition:
+  - Use shadcn patterns (e.g., DialogHeader/DialogFooter, DropdownMenuTrigger, etc.) as intended.
+  - Ensure triggers and focus management stay correct (don't break accessibility).
+- Forms:
+  - If the project uses a shadcn form pattern, follow it consistently.
+  - Always pair inputs with Label, and show inline error text in a consistent style.
+- Feedback:
+  - Use shadcn Toast/Sonner for success/error messages.
+  - Use Alert components for page-level errors.
+
+## 6) Forms (Zod + superforms + shadcn)
+
+This project uses `sveltekit-superforms` with Zod validation and shadcn-svelte form components (formsnap).
+
+- Define Zod schemas in `*-schemas.ts` files next to forms. Export both schema and type (`type MySchema = typeof mySchema`).
+- Use `zod4` adapter from `sveltekit-superforms/adapters` with `SPA: true` mode.
+- Initialize: `superForm(defaults(zod4(schema)), { validators: zod4(schema), SPA: true, onUpdate: ... })`
+- Destructure `{ form: formData, enhance }` from `superForm`.
+- Form state: keep `serverError`, `loading`, and optionally `success` as separate `$state` variables.
+- Markup pattern: `Form.Field` → `Form.Control` with `{#snippet children({ props })}` → spread `{...props}` on Input → `Form.FieldErrors`.
+- Always `bind:value={$formData.fieldName}` (note `$` prefix) and `disabled={loading}` on inputs.
+- Use `Form.Button` for submit with `Spinner` inside when loading.
+- Show server errors (API/Supabase) via Alert, separate from field validation errors.
+- Reference existing forms in `src/lib/components/auth/` and `src/lib/components/account/sections/` for patterns.
+
+## 7) Supabase Auth rules
+
+- Auth state must include:
+  - `user: User | null`
+  - `session: Session | null` where relevant for UI/session-driven logic
+  - `loading: boolean` (true until auth resolves)
+  - `error: string | null` where useful
+- Always handle the full auth lifecycle:
+  - initial loading
+  - signed-out
+  - signed-in
+  - email verification state (if used)
+- Subscribe to auth changes through a single, cleanup-safe listener:
+  - use `supabase.auth.onAuthStateChange(...)`
+  - initialize once (idempotent guard) to avoid duplicate listeners in dev/HMR
+- Auth flows MUST use Supabase primitives:
+  - password sign-in/sign-up where applicable
+  - magic link / OTP / OAuth flows where applicable
+  - sign-out via Supabase auth API (do not manually clear storage)
+- Never manage JWT/session token storage manually; let Supabase client persistence handle it.
+- Keep anon key usage client-safe:
+  - only expose `PUBLIC_*` keys in client code
+  - never expose service role keys in SPA/client code
+- Provide user-friendly error messages by mapping Supabase auth errors to short, actionable text.
+
+## 8) Supabase Database (Postgres) rules
+
+- Prefer typed query helpers and explicit column selection:
+  - centralize table access in `src/lib/supabase/*` and business logic in `src/lib/services/*`
+  - select only required columns (avoid broad `select('*')` unless justified)
+- Never scatter raw Supabase table queries across many components:
+  - keep CRUD/query logic in `src/lib/supabase/*`, and the rules that use it in `src/lib/services/*-service.ts`.
+- RLS is non-negotiable for user data:
+  - design tables and policies so authorization is enforced in Postgres
+  - assume JWT-based auth context is used for row-level access checks
+- Reads must handle:
+  - loading state
+  - empty state
+  - error state
+- Writes must handle:
+  - disabled submit while pending
+  - success feedback
+  - error feedback
+- Prefer queries with indexes in mind; avoid unbounded reads.
+- Use pagination/range limits for list endpoints to avoid overfetching.
+- Keep a single Supabase client initialization path and reuse it across modules.
+
+## 9) UX defaults (non-negotiable)
+
+- Every async operation MUST include:
+  - a visible loading state (spinner/skeleton/progress)
+  - a disabled state for relevant buttons/inputs
+  - an error state with actionable text
+  - an empty state when data lists are empty
+- Prefer shadcn components for UX states:
+  - Skeleton for list/content loading
+  - Spinner inside Button for pending submits
+  - Card + Alert for error/empty states
+- Forms MUST:
+  - show inline validation or at minimum clear errors near fields
+  - disable submit while pending
+  - preserve user input on failure
+  - focus the first invalid field or show a summary at top
+- Navigation MUST:
+  - preserve intent on auth redirect (use `next=` query param)
+  - return the user to `next` after successful login
+- Never block public pages behind global auth loading; gate only protected sections.
+
+## 9.1) Onboarding flow conventions (mandatory when enabled)
+
+- Use a single onboarding feature flag source of truth in `src/lib/config/features.ts`:
+  - `featureFlags.enableOnboarding`
+  - never hardcode onboarding toggles in route files.
+- Define onboarding steps as config, not scattered constants:
+  - keep step metadata in `onboardingSteps`
+  - derive count from `onboardingStepCount`
+  - resolve paths with `getOnboardingStepPath(...)`.
+- Keep onboarding persistence in `src/lib/supabase/profiles.ts`:
+  - read with `getCurrentUserProfile()`
+  - write partial fields with `updateCurrentUserProfile(...)`
+  - complete via the security definer RPC with `completeOnboardingRpc(...)`.
+- Keep onboarding business logic in `src/lib/services/onboarding-service.ts`:
+  - save progress with `saveStep(...)`
+  - complete with `finishOnboarding(...)`
+  - compute routing state with `isOnboardingComplete(...)` and `getNextOnboardingStep(...)`
+  - read combined state with `getOnboardingStatus()` and `prefillStep(...)`
+  - all service functions return `Result<T>` — callers handle both paths explicitly, no ambient try/catch.
+- Enforce onboarding in protected layout flow, not per page:
+  - mandatory check belongs in `src/routes/(protected)/app/+layout.svelte`
+  - route identification belongs in `isOnboardingRoute(...)` guard helper.
+- Onboarding pages must prefill from `user_profiles` when values exist.
+- Onboarding steps must prevent skipping forward by redirecting to the required step.
+- Keep onboarding UI compact and centered with shared wrapper component:
+  - use `src/lib/components/onboarding/onboarding-shell.svelte` for logo, step indicator, title/subtext, and content slot.
+- Onboarding schema changes must be tracked in SQL migrations under `supabase/migrations/` and documented in `README.md`.
+
+## 10) Accessibility + semantics
+
+- Use semantic HTML first (`button` for actions, `a` for navigation).
+- Inputs must have associated labels (prefer shadcn Label).
+- Loading indicators must be accessible:
+  - include `aria-busy` where relevant
+  - include visually hidden text for spinners if needed
+- Dialogs/menus must manage focus and close on Escape (shadcn patterns usually handle this — don't break them).
+- Color is never the only signal for error/success.
+
+## 11) Comments & explainability (required)
+
+- Add clear, descriptive comments for non-trivial logic so the code is easy to follow.
+- Comment rules:
+  - Explain *why* something exists (guards, edge cases, tricky Supabase/RLS behavior), not just *what* the line does.
+  - Place a short header comment at the top of each file describing its purpose and how it fits into the app.
+  - For functions: add a brief comment explaining inputs/outputs and side effects (network calls, navigation, storage).
+  - For complex blocks: add 1–3 line comments explaining the flow/decision points.
+  - Keep comments accurate and updated; remove outdated comments.
+- Do not over-comment obvious markup or one-liners; focus on logic, control flow, and integration points.
+- Do NOT use JSDoc comments.
+
+## 12) Error handling + resilience
+
+- Catch and surface errors; never silently fail.
+- Log unexpected errors to console in dev; keep user messages short and friendly.
+- Prefer predictable error UI over throwing.
+- Avoid infinite redirect loops: guard conditions must be explicit and stable.
+- Handle offline states gracefully for Supabase operations where possible (show "You appear offline").
+
+## 13) Performance + reactivity
+
+- Avoid unnecessary reactive loops:
+  - do not put `goto()` or network calls inside `$effect` without strong guards.
+- Use derived values for computed UI state instead of recomputing inside markup.
+- Minimize re-renders by keeping state local when possible.
+- Use skeletons for list loading; spinners for short actions; never show blank screens.
+
+## 14) Code style
+
+- Prefer early returns.
+- Keep functions small (< ~40 lines) when feasible.
+- Avoid deep nesting; extract helpers.
+- No commented-out code.
+- Use consistent formatting and naming already present in repo.
+
+## Related skills
+
+- `engineering-patterns` — classic patterns (Repository, Service Layer, Adapter, etc.) adapted for this stack. On demand, when structuring a new feature.
+- `supabase-security` — security review and hardening for this stack: RLS, auth flows, XSS, input validation, open redirects, session management.
+
+## Issue tracking
+
+This project uses `fp` (local-first issue tracking, prefix `SVEL`). Run `fp tree` for
+the hierarchy, `fp context <id>` to load an issue, `fp issue list` for a flat list.

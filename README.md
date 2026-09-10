@@ -19,23 +19,27 @@ Everything you don't want to spend time on when prototyping or building an MVP �
 - Protected route group with auth + email verification guards
 - Optional multi-step onboarding flow (feature-flagged, config-driven)
 
-## Cursor Configuration
+## Claude Code Configuration
 
-This project includes Cursor rules, skills, and MCP server integrations that keep AI-assisted development aligned with the project's conventions and security requirements.
+This project includes Claude Code rules, skills, and MCP server integrations that keep AI-assisted development aligned with the project's conventions and security requirements.
 
-### Rules (`.cursor/rules/`)
+### Project rules (`CLAUDE.md`)
 
-- **`sveltekit-spa.mdc`** — Primary project rules covering SvelteKit conventions, runes, TypeScript, Supabase auth/database patterns, shadcn-svelte usage, form handling, onboarding flow, accessibility, error handling, and code style. Always applied.
-- **`engineering-patterns.mdc`** — Classic engineering patterns (Factory, Repository, Service Layer, Singleton, Strategy, Observer, Adapter) adapted for a SvelteKit SPA with Supabase. Applied on demand when structuring new features.
+Always loaded. Covers SvelteKit conventions, runes and state management, TypeScript, folder structure, shadcn-svelte usage, form handling, Supabase auth/database patterns, UX defaults, the onboarding flow, accessibility, comments, error handling, performance, and code style.
 
-### Skills (`.cursor/skills/`)
+### Skills (`.claude/skills/`)
 
-- **`security-review`** — Security review and hardening guidance for the SvelteKit SPA + Supabase stack. Covers RLS policies, auth flows, XSS prevention, input validation, open redirect prevention, session management, and a deployment checklist. Invoke with `/security-review` to scan for vulnerabilities.
+- **`engineering-patterns`** — Classic engineering patterns (Factory, Repository, Service Layer, Singleton, Strategy, Observer, Adapter) adapted for a SvelteKit SPA with Supabase. Loaded on demand when structuring new features.
+- **`supabase-security`** — Security review and hardening guidance for the SvelteKit SPA + Supabase stack. Covers RLS policies, auth flows, XSS prevention, input validation, open redirect prevention, session management, and a deployment checklist.
 
-### MCP Servers
+### MCP Servers (`.mcp.json`)
 
-- **Supabase MCP** — Database/auth inspection, policy checks, and schema awareness. Treat as **read-only by default**. Only run mutating operations when explicitly intended and reviewed.
-- **Svelte MCP** — Svelte/SvelteKit development guidance and API-accurate docs. Preferred workflow: `list-sections` -> `get-documentation` (all relevant sections) -> `svelte-autofixer` until no issues remain.
+- **Supabase MCP** — Database/auth inspection, policy checks, and schema awareness. Configured with `read_only=true`. Only run mutating operations when explicitly intended and reviewed. Requires OAuth: run `/mcp` to authenticate.
+- **Svelte MCP** — Svelte/SvelteKit development guidance and API-accurate docs. No authentication needed. Preferred workflow: `list-sections` -> `get-documentation` (all relevant sections) -> `svelte-autofixer` until no issues remain.
+
+### Issue tracking
+
+Issues are tracked locally with [`fp`](https://fiberplane.com) under the `SVEL` prefix. Run `fp tree` for the hierarchy or `fp context <id>` to load one.
 
 ## Route Structure
 
@@ -201,7 +205,7 @@ The browser is untrusted. Supabase (Postgres RLS + Auth) is the only enforcement
 - Destructive actions (password change, email change, account deletion) require current password re-authentication
 - The `service_role` key is never used in frontend code
 
-Use `/security-review` in Cursor to scan for vulnerabilities against the full checklist.
+Use the `supabase-security` skill to scan for vulnerabilities against the full checklist.
 
 Useful policy audit query:
 
