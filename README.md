@@ -118,6 +118,7 @@ PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_publishable_anon_key
 ```
 
 Notes:
+
 - The `PUBLIC_` prefix intentionally exposes these values to browser code.
 - Security comes from Supabase Auth + RLS policies, not from hiding the publishable key.
 
@@ -125,7 +126,7 @@ Notes:
 
 In Supabase dashboard:
 
-1. Go to **Authentication -> Providers** and enable **Email**.
+1. Go to **Authentication -> Providers** and enable **Email**, and turn on **Confirm email**. Without it, `signUp` returns a live session for unconfirmed users and the email-verification gate in the app is UI only. RLS never checks confirmation.
 2. In **Authentication -> URL Configuration**, set the site URL and allow redirect URLs for both development and production.
 3. This app builds redirect links from `window.location.origin`, so both local and production origins must be allowlisted.
 4. For production email deliverability, configure **Authentication -> Email (SMTP)** with your provider of choice (for example Resend, Postmark, SendGrid, etc.). This app calls Supabase Auth endpoints only, so provider credentials stay inside Supabase.
@@ -144,7 +145,6 @@ Recommended configuration:
   - `https://www.your-domain.dev/set-new-password/`
   - `https://www.your-domain.dev/reset-password/`
 
-
 ### 4) Database setup
 
 Apply the migration in `supabase/migrations/` via the Supabase SQL editor or the CLI:
@@ -154,7 +154,7 @@ npx supabase link --project-ref <your-project-ref>
 npx supabase db push
 ```
 
-The single migration sets up the `user_profiles` table with RLS policies, CHECK constraints, `delete_current_user` and `complete_onboarding` security definer RPCs, and a trigger protecting `onboarding_completed_at` from direct writes.
+The base migration sets up the `user_profiles` table with RLS policies, CHECK constraints, `delete_current_user` and `complete_onboarding` security definer RPCs, and a trigger on `onboarding_completed_at`. The second migration (`20260910200000_tighten_user_profiles_grants.sql`) replaces the blanket table grants with column-level UPDATE grants and revokes RPC execution from `anon`. Apply both.
 
 ### 5) Run locally
 
@@ -187,6 +187,7 @@ This boilerplate includes an optional multi-step onboarding flow that guides new
 ### Customizing steps
 
 Edit the `onboardingSteps` array in `src/lib/config/features.ts` to change questions, labels, or field keys. For each field you add or change, update:
+
 - The `OnboardingFieldKey` type (same file)
 - The Zod schema in `src/lib/components/onboarding/onboarding-schemas.ts`
 - The `user_profiles` columns in the onboarding migration
@@ -198,11 +199,12 @@ The browser is untrusted. Supabase (Postgres RLS + Auth) is the only enforcement
 - `PUBLIC_SUPABASE_PUBLISHABLE_KEY` is safe to expose — it can only do what RLS allows
 - RLS policies scope every query to `auth.uid()`
 - `security definer` RPCs assert `auth.uid() IS NOT NULL` and are restricted to the `authenticated` role
-- A `BEFORE UPDATE` trigger protects `onboarding_completed_at` from direct writes — only the `complete_onboarding` RPC (security definer) can set it
+- The `authenticated` role has column-level UPDATE grants only (`id`, `email`, `display_name`, `favorite_fruit`, `favorite_drink`, `onboarding_step`). `onboarding_completed_at` and `created_at` cannot be written directly; only the `complete_onboarding` RPC (security definer) sets the completion timestamp. A `BEFORE UPDATE` trigger is a second layer.
+- The base migration sets `ALTER DEFAULT PRIVILEGES ... GRANT ALL ON TABLES TO anon, authenticated`. Every new table gets blanket grants, so add explicit `REVOKE`/`GRANT` statements for each new table.
 - `CHECK` constraints enforce string length limits at the database level, matching client-side Zod `max()` limits
 - Auth error messages are mapped to generic text — raw Supabase errors are never exposed to users
 - Redirect targets (`next=` query parameter) are validated with `getSafeRedirect()` to prevent open redirects
-- Destructive actions (password change, email change, account deletion) require current password re-authentication
+- The UI asks for the current password before password change, email change and account deletion. This is a client-side check only; a valid access token can call `delete_current_user` directly. For `updateUser` flows, Supabase's **Secure password change** / **Secure email change** settings add a server-side check.
 - The `service_role` key is never used in frontend code
 
 Use the `supabase-security` skill to scan for vulnerabilities against the full checklist.
@@ -218,14 +220,14 @@ order by tablename, policyname;
 
 ## Development Scripts
 
-| Command | Description |
-| --- | --- |
-| `npm run dev` | Start dev server |
-| `npm run build` | Build for production |
-| `npm run preview` | Preview production build |
-| `npm run check` | Svelte + TypeScript checks |
-| `npm run lint` | ESLint + Prettier checks |
-| `npm run format` | Format code |
+| Command           | Description                |
+| ----------------- | -------------------------- |
+| `npm run dev`     | Start dev server           |
+| `npm run build`   | Build for production       |
+| `npm run preview` | Preview production build   |
+| `npm run check`   | Svelte + TypeScript checks |
+| `npm run lint`    | ESLint + Prettier checks   |
+| `npm run format`  | Format code                |
 
 ## Deployment (GitHub Pages + Custom Domain)
 
@@ -259,6 +261,7 @@ In **Repository -> Settings -> Pages**:
 3. Enable **Enforce HTTPS** when available
 
 DNS records should include:
+
 - Apex `A` records to GitHub Pages IPs (`185.199.108.153`, `.109.153`, `.110.153`, `.111.153`)
 - Apex `AAAA` records to GitHub Pages IPv6 endpoints
 - `www` `CNAME` to `YOUR-GITHUB-USERNAME.github.io`

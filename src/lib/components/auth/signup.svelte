@@ -1,7 +1,7 @@
 <script lang="ts">
 	/**
 	 * Signup Page
-	 * 
+	 *
 	 * Signup page accessible at /signup.
 	 * Handles user registration with email and password and informs the parent
 	 * of success so the page can handle navigation or other side effects.
@@ -43,7 +43,7 @@
 					loading = false;
 				}
 			}
-		},
+		}
 	});
 
 	const { form: formData, enhance } = form;

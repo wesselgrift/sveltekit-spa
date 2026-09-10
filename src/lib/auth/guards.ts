@@ -9,11 +9,7 @@
 import { authState } from './state.svelte';
 import { getOnboardingStepByPath } from '$lib/config/features';
 
-export type GuardStatus =
-	| 'loading'
-	| 'authenticated'
-	| 'needs-auth'
-	| 'needs-verification';
+export type GuardStatus = 'loading' | 'authenticated' | 'needs-auth' | 'needs-verification';
 
 // Pure computation of auth status for protected route layouts.
 // Must be used inside $derived — the caller is responsible for

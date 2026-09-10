@@ -5,7 +5,8 @@
  */
 
 // Validates that a redirect target is a safe relative path within the app.
-// Rejects absolute URLs, protocol-relative URLs, and encoded bypass attempts.
+// Returns the decoded path (plus search and hash) or the fallback.
+// Rejects absolute URLs, protocol-relative URLs, backslash tricks and malformed encoding.
 export function getSafeRedirect(next: string | null, fallback = '/app'): string {
 	if (!next) return fallback;
 
@@ -16,10 +17,21 @@ export function getSafeRedirect(next: string | null, fallback = '/app'): string 
 		return fallback;
 	}
 
-	if (!decoded.startsWith('/') || decoded.startsWith('//')) return fallback;
+	// Must be a plain path: no scheme, no protocol-relative URL, no backslashes.
+	// Browsers resolve "/\evil.com" to "https://evil.com/", so backslashes are never safe.
+	if (!decoded.startsWith('/') || decoded.startsWith('//') || decoded.includes('\\')) {
+		return fallback;
+	}
 
-	const lower = decoded.toLowerCase();
-	if (lower.includes('javascript:') || lower.includes('data:')) return fallback;
+	// Resolve against a fixed dummy origin. Anything that escapes it is rejected.
+	const base = 'https://safe.invalid';
+	let url: URL;
+	try {
+		url = new URL(decoded, base);
+	} catch {
+		return fallback;
+	}
+	if (url.origin !== base) return fallback;
 
-	return next;
+	return url.pathname + url.search + url.hash;
 }

@@ -1,5 +1,4 @@
 <script lang="ts">
-
 	/**
 	 * Account section / password component
 	 * Allows for changing password
@@ -48,7 +47,7 @@
 					loading = false;
 				}
 			}
-		},
+		}
 	});
 
 	const { form: formData, enhance } = form;
@@ -68,26 +67,32 @@
 		success = false;
 		serverError = null;
 	}
-
 </script>
 
 <div class="flex flex-col border-b">
-	<div class="flex flex-row gap-4 p-4 w-full">
+	<div class="flex w-full flex-row gap-4 p-4">
 		<Lock class="shrink-0" strokeWidth={1.5} />
 		<div class="flex flex-col gap-1 text-sm">
 			<p class="font-medium">Password</p>
 			<p class="text-muted-foreground">•••••••••••••</p>
 		</div>
-		<Button onclick={openEditForm} variant="outline" size="sm" class="ml-auto" disabled={showForm}>Change password</Button>
+		<Button onclick={openEditForm} variant="outline" size="sm" class="ml-auto" disabled={showForm}
+			>Change password</Button
+		>
 	</div>
 
 	{#if showForm}
-		<form method="POST" use:enhance class="flex flex-col p-4 pl-14 max-w-sm gap-5">
+		<form method="POST" use:enhance class="flex max-w-sm flex-col gap-5 p-4 pl-14">
 			<Form.Field {form} name="currentPassword">
 				<Form.Control>
 					{#snippet children({ props })}
 						<Form.Label>Current Password</Form.Label>
-						<Input {...props} type="password" bind:value={$formData.currentPassword} disabled={loading} />
+						<Input
+							{...props}
+							type="password"
+							bind:value={$formData.currentPassword}
+							disabled={loading}
+						/>
 					{/snippet}
 				</Form.Control>
 				<Form.FieldErrors />
@@ -96,23 +101,32 @@
 				<Form.Control>
 					{#snippet children({ props })}
 						<Form.Label>New Password</Form.Label>
-						<Input {...props} type="password" bind:value={$formData.newPassword} disabled={loading} />
+						<Input
+							{...props}
+							type="password"
+							bind:value={$formData.newPassword}
+							disabled={loading}
+						/>
 					{/snippet}
 				</Form.Control>
 				<Form.FieldErrors />
 			</Form.Field>
 
 			{#if serverError}
-				<div class="h-8 px-2 flex gap-2 items-center rounded-md text-sm border text-red-700 bg-red-50 border-red-200 dark:text-red-50 dark:bg-red-700 dark:border-red-600">
+				<div
+					class="flex h-8 items-center gap-2 rounded-md border border-red-200 bg-red-50 px-2 text-sm text-red-700 dark:border-red-600 dark:bg-red-700 dark:text-red-50"
+				>
 					<CircleAlert class="size-4" />
 					{serverError}
 				</div>
 			{/if}
 
-			<div class="flex flex-row gap-2 mb-4">
+			<div class="mb-4 flex flex-row gap-2">
 				{#if success}
-					<div class="h-auto py-2 px-2 flex gap-2 items-start rounded-md text-sm border text-emerald-700 bg-emerald-50 border-emerald-100 dark:text-emerald-200 dark:bg-emerald-700 dark:border-emerald-600">
-						<Check class="size-4 mt-0.5 shrink-0" />
+					<div
+						class="flex h-auto items-start gap-2 rounded-md border border-emerald-100 bg-emerald-50 px-2 py-2 text-sm text-emerald-700 dark:border-emerald-600 dark:bg-emerald-700 dark:text-emerald-200"
+					>
+						<Check class="mt-0.5 size-4 shrink-0" />
 						Password changed successfully. Please log in with your new password.
 					</div>
 				{:else}
@@ -122,7 +136,13 @@
 						{/if}
 						Save
 					</Form.Button>
-					<Button type="button" onclick={closeEditForm} variant="outline" size="sm" disabled={loading}>Cancel</Button>
+					<Button
+						type="button"
+						onclick={closeEditForm}
+						variant="outline"
+						size="sm"
+						disabled={loading}>Cancel</Button
+					>
 				{/if}
 			</div>
 		</form>

@@ -36,8 +36,12 @@
 		page.url.searchParams.get('token_hash') ?? page.url.searchParams.get('code') ?? ''
 	);
 	const recoveryType = $derived(page.url.searchParams.get('type'));
-	const hasValidRecoveryParams = $derived(Boolean(recoveryToken) && (!recoveryType || recoveryType === 'recovery'));
-	const canCompleteRecovery = $derived(hasValidRecoveryParams || hasRecoveryFlag || hasHashRecovery);
+	const hasValidRecoveryParams = $derived(
+		Boolean(recoveryToken) && (!recoveryType || recoveryType === 'recovery')
+	);
+	const canCompleteRecovery = $derived(
+		hasValidRecoveryParams || hasRecoveryFlag || hasHashRecovery
+	);
 
 	onMount(() => {
 		hasRecoveryFlag = window.sessionStorage.getItem(PASSWORD_RECOVERY_FLAG) === '1';
@@ -88,9 +92,7 @@
 				Your password was updated successfully. You can now sign in with your new password.
 			</AlertDescription>
 		</Alert>
-		<Button href="/login" class="w-full">
-			Continue to login
-		</Button>
+		<Button href="/login" class="w-full">Continue to login</Button>
 	</div>
 {:else}
 	<div class="flex flex-col gap-5">
@@ -105,7 +107,8 @@
 			<Alert variant="destructive">
 				<AlertTitle>Invalid link</AlertTitle>
 				<AlertDescription>
-					Your password reset link is missing required parameters or has expired. Request a new reset link to continue.
+					Your password reset link is missing required parameters or has expired. Request a new
+					reset link to continue.
 				</AlertDescription>
 			</Alert>
 			<Button href="/reset-password" variant="outline" class="w-full">
@@ -117,7 +120,12 @@
 					<Form.Control>
 						{#snippet children({ props })}
 							<Form.Label>New password</Form.Label>
-							<Input {...props} type="password" bind:value={$formData.newPassword} disabled={loading} />
+							<Input
+								{...props}
+								type="password"
+								bind:value={$formData.newPassword}
+								disabled={loading}
+							/>
 						{/snippet}
 					</Form.Control>
 					<Form.FieldErrors />
@@ -127,7 +135,12 @@
 					<Form.Control>
 						{#snippet children({ props })}
 							<Form.Label>Confirm new password</Form.Label>
-							<Input {...props} type="password" bind:value={$formData.confirmNewPassword} disabled={loading} />
+							<Input
+								{...props}
+								type="password"
+								bind:value={$formData.confirmNewPassword}
+								disabled={loading}
+							/>
 						{/snippet}
 					</Form.Control>
 					<Form.FieldErrors />

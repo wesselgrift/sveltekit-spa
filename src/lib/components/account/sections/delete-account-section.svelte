@@ -1,5 +1,4 @@
 <script lang="ts">
-	
 	/**
 	 * Account section / delete account component
 	 * Allows for account deletion
@@ -39,7 +38,7 @@
 					deleting = false;
 				}
 			}
-		},
+		}
 	});
 
 	const { form: formData, enhance } = form;
@@ -52,48 +51,71 @@
 	}
 </script>
 
-<div class="flex flex-row rounded-md bg-red-50/70 dark:bg-red-950/70 border border-red-100 dark:border-red-900">
+<div
+	class="flex flex-row rounded-md border border-red-100 bg-red-50/70 dark:border-red-900 dark:bg-red-950/70"
+>
 	<div class="flex flex-col">
-		<div class="flex flex-row gap-4 p-4 w-full text-red-700 dark:text-red-300">
+		<div class="flex w-full flex-row gap-4 p-4 text-red-700 dark:text-red-300">
 			<UserRoundX class="shrink-0" strokeWidth={1.5} />
 			<div class="flex flex-col gap-1 text-sm">
 				<p class="font-medium">
 					{#if !confirmDelete}
-						Delete account        
+						Delete account
 					{:else}
 						Are you sure?
 					{/if}
 				</p>
-					<p class="opacity-80">This is irreversable and will permanently delete your account and all associated data.</p>
-				</div>
-			<Button onclick={() => confirmDelete = true} variant="destructive" size="sm" class="ml-auto" disabled={deleting || confirmDelete}>Delete account</Button>
+				<p class="opacity-80">
+					This is irreversable and will permanently delete your account and all associated data.
+				</p>
+			</div>
+			<Button
+				onclick={() => (confirmDelete = true)}
+				variant="destructive"
+				size="sm"
+				class="ml-auto"
+				disabled={deleting || confirmDelete}>Delete account</Button
+			>
 		</div>
 
 		{#if confirmDelete}
-			<form method="POST" use:enhance class="flex flex-col p-4 pl-14 max-w-sm gap-5">
+			<form method="POST" use:enhance class="flex max-w-sm flex-col gap-5 p-4 pl-14">
 				<Form.Field {form} name="password">
 					<Form.Control>
 						{#snippet children({ props })}
 							<Form.Label>Enter your password to confirm</Form.Label>
-							<Input {...props} type="password" bind:value={$formData.password} disabled={deleting} />
+							<Input
+								{...props}
+								type="password"
+								bind:value={$formData.password}
+								disabled={deleting}
+							/>
 						{/snippet}
 					</Form.Control>
 					<Form.FieldErrors />
 				</Form.Field>
 				{#if serverError}
-					<div class="h-8 px-2 flex gap-2 items-center rounded-md text-sm text-red-700 bg-red-100 border-red-200 dark:text-red-50 dark:bg-red-700 dark:border-red-600">
+					<div
+						class="flex h-8 items-center gap-2 rounded-md border-red-200 bg-red-100 px-2 text-sm text-red-700 dark:border-red-600 dark:bg-red-700 dark:text-red-50"
+					>
 						<CircleAlert class="size-4" />
 						{serverError}
 					</div>
 				{/if}
-				<div class="flex flex-row gap-2 mb-4">
+				<div class="mb-4 flex flex-row gap-2">
 					<Form.Button variant="destructive" size="sm" disabled={deleting}>
 						{#if deleting}
 							<Spinner />
 						{/if}
 						Confirm
 					</Form.Button>
-					<Button type="button" onclick={handleCancel} variant="outline" size="sm" disabled={deleting}>Cancel</Button>
+					<Button
+						type="button"
+						onclick={handleCancel}
+						variant="outline"
+						size="sm"
+						disabled={deleting}>Cancel</Button
+					>
 				</div>
 			</form>
 		{/if}

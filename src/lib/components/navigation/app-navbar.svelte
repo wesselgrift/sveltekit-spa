@@ -29,13 +29,15 @@
 </script>
 
 <nav class="border-b bg-secondary/30">
-	<div class="container mx-auto flex items-center justify-between px-6 h-14">
+	<div class="container mx-auto flex h-14 items-center justify-between px-6">
 		<div class="flex items-center">
-			<a href="/app" class="text-lg font-semibold tracking-tight hover:text-foreground/80">SvelteKit SPA</a>
-		{#each breadcrumbs as crumb (crumb.label)}
-			<span class="mx-2 text-muted-foreground/60 font-semibold">/</span>
-			<span class="text-lg text-muted-foreground font-semibold">{crumb.label}</span>
-		{/each}
+			<a href="/app" class="text-lg font-semibold tracking-tight hover:text-foreground/80"
+				>SvelteKit SPA</a
+			>
+			{#each breadcrumbs as crumb (crumb.label)}
+				<span class="mx-2 font-semibold text-muted-foreground/60">/</span>
+				<span class="text-lg font-semibold text-muted-foreground">{crumb.label}</span>
+			{/each}
 		</div>
 
 		<!-- Show Account button only on the root /app page -->

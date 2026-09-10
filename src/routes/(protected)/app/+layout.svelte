@@ -1,12 +1,12 @@
 <script lang="ts">
-    /**
-     * Protected Route Layout
-     * 
-     * Guards authenticated routes using useProtectedRoute (pure derivation) and
-     * reacts to non-authenticated statuses via $effect for redirects.
-     * Shows loading spinner during auth check, redirects unauthenticated users,
-     * renders children only when user is authenticated and email verified.
-     */
+	/**
+	 * Protected Route Layout
+	 *
+	 * Guards authenticated routes using useProtectedRoute (pure derivation) and
+	 * reacts to non-authenticated statuses via $effect for redirects.
+	 * Shows loading spinner during auth check, redirects unauthenticated users,
+	 * renders children only when user is authenticated and email verified.
+	 */
 
 	import { untrack } from 'svelte';
 	import { goto } from '$app/navigation';
@@ -15,7 +15,11 @@
 	import { AppNavbar } from '$lib/components/navigation';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { Alert, AlertTitle, AlertDescription } from '$lib/components/ui/alert';
-	import { featureFlags, getOnboardingStepByPath, getOnboardingStepPath } from '$lib/config/features';
+	import {
+		featureFlags,
+		getOnboardingStepByPath,
+		getOnboardingStepPath
+	} from '$lib/config/features';
 	import { getOnboardingStatus } from '$lib/services/onboarding-service';
 
 	let { children } = $props();
@@ -69,38 +73,37 @@
 		let cancelled = false;
 		onboardingStatus = 'loading';
 
-		void getOnboardingStatus()
-			.then((result) => {
-				if (cancelled) {
-					return;
+		void getOnboardingStatus().then((result) => {
+			if (cancelled) {
+				return;
+			}
+
+			if (!result.ok) {
+				console.error('Failed to evaluate onboarding status:', result.error);
+				onboardingStatus = 'error';
+				return;
+			}
+
+			if (result.data.complete) {
+				onboardingStatus = 'complete';
+
+				if (isOnboardingRoute(currentPath)) {
+					void goto('/app');
 				}
+				return;
+			}
 
-				if (!result.ok) {
-					console.error('Failed to evaluate onboarding status:', result.error);
-					onboardingStatus = 'error';
-					return;
-				}
+			const requiredStepPath = getOnboardingStepPath(result.data.nextStep);
+			const currentlyOnOnboarding = isOnboardingRoute(currentPath);
+			const currentStep = getOnboardingStepByPath(currentPath);
+			const alreadyOnRequiredStep = currentStep?.stepNumber === result.data.nextStep;
 
-				if (result.data.complete) {
-					onboardingStatus = 'complete';
+			onboardingStatus = 'incomplete';
 
-					if (isOnboardingRoute(currentPath)) {
-						void goto('/app');
-					}
-					return;
-				}
-
-				const requiredStepPath = getOnboardingStepPath(result.data.nextStep);
-				const currentlyOnOnboarding = isOnboardingRoute(currentPath);
-				const currentStep = getOnboardingStepByPath(currentPath);
-				const alreadyOnRequiredStep = currentStep?.stepNumber === result.data.nextStep;
-
-				onboardingStatus = 'incomplete';
-
-				if (!currentlyOnOnboarding || !alreadyOnRequiredStep) {
-					void goto(requiredStepPath);
-				}
-			});
+			if (!currentlyOnOnboarding || !alreadyOnRequiredStep) {
+				void goto(requiredStepPath);
+			}
+		});
 
 		return () => {
 			cancelled = true;
@@ -109,17 +112,17 @@
 </script>
 
 {#if status === 'loading' || redirecting}
-	<div class="flex items-center justify-center min-h-screen">
+	<div class="flex min-h-screen items-center justify-center">
 		<Spinner class="size-6" />
 	</div>
 {:else if status === 'authenticated'}
 	{#if !onboardingEnabled || onboardingStatus === 'complete' || (onboardingStatus === 'incomplete' && viewingOnboardingRoute)}
-        {#if !viewingOnboardingRoute}
+		{#if !viewingOnboardingRoute}
 			<AppNavbar />
 		{/if}
-        {@render children()}
-    {:else if onboardingStatus === 'error'}
-		<div class="flex items-center justify-center min-h-screen p-4">
+		{@render children()}
+	{:else if onboardingStatus === 'error'}
+		<div class="flex min-h-screen items-center justify-center p-4">
 			<Alert variant="destructive" class="w-full max-w-md">
 				<AlertTitle>Unable to continue onboarding</AlertTitle>
 				<AlertDescription>
@@ -128,7 +131,7 @@
 			</Alert>
 		</div>
 	{:else}
-		<div class="flex items-center justify-center min-h-screen">
+		<div class="flex min-h-screen items-center justify-center">
 			<Spinner class="size-6" />
 		</div>
 	{/if}

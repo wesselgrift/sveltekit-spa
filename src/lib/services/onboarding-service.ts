@@ -48,7 +48,10 @@ export async function getOnboardingStatus(): Promise<Result<OnboardingStatus>> {
 
 		return { ok: true, data: { complete, nextStep, profile } };
 	} catch {
-		return { ok: false, error: 'We could not load your onboarding status. Refresh the page and try again.' };
+		return {
+			ok: false,
+			error: 'We could not load your onboarding status. Refresh the page and try again.'
+		};
 	}
 }
 
@@ -78,7 +81,10 @@ export async function prefillStep(
 			}
 		};
 	} catch {
-		return { ok: false, error: 'We could not load your onboarding data. Please refresh and try again.' };
+		return {
+			ok: false,
+			error: 'We could not load your onboarding data. Please refresh and try again.'
+		};
 	}
 }
 

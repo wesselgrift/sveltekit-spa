@@ -1,6 +1,6 @@
 /**
  * Auth Module Barrel Export
- * 
+ *
  * Convenience barrel export for cleaner imports.
  */
 

@@ -11,8 +11,7 @@ import { supabase } from '$lib/supabase/client';
 import {
 	deleteCurrentAuthUser,
 	deleteUserProfile,
-	syncProfileForCurrentUser,
-	upsertUserProfile
+	syncProfileForCurrentUser
 } from '$lib/supabase/profiles';
 import type { Result } from '$lib/types/result';
 
@@ -72,7 +71,12 @@ export async function loginWithEmail(email: string, password: string): Promise<v
 // The user will need to verify their email before they can access protected features.
 // Profile creation is handled after session establishment in auth state sync.
 // Throws Supabase auth errors that should be caught and displayed to the user.
-export async function signupWithEmail(firstName: string, lastName: string, email: string, password: string): Promise<void> {
+export async function signupWithEmail(
+	firstName: string,
+	lastName: string,
+	email: string,
+	password: string
+): Promise<void> {
 	const displayName = `${firstName.trim()} ${lastName.trim()}`.trim();
 	const { data, error } = await supabase.auth.signUp({
 		email,

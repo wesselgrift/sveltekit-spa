@@ -19,6 +19,10 @@ export const authState = $state({
 // Prevents duplicate listener registration in dev/HMR
 let listenerRegistered = false;
 
+// Tracks which user's profile row was already synced this page lifetime, so the
+// auth listener does not write on every event (INITIAL_SESSION, TOKEN_REFRESHED, ...).
+let lastSyncedUserId: string | null = null;
+
 // Normalizes Supabase user shape to the existing app-level auth shape.
 function toAuthUser(user: SupabaseUser): AuthUser {
 	const authUser: AuthUser = {
@@ -38,8 +42,7 @@ function toAuthUser(user: SupabaseUser): AuthUser {
 			// inspect updated fields without waiting for a re-read from authState.
 			authUser.uid = latestUser.id;
 			authUser.email = latestUser.email ?? null;
-			authUser.displayName =
-				(latestUser.user_metadata?.display_name as string | undefined) ?? null;
+			authUser.displayName = (latestUser.user_metadata?.display_name as string | undefined) ?? null;
 			authUser.emailVerified = Boolean(latestUser.email_confirmed_at);
 			authState.user = authUser;
 		}
@@ -79,13 +82,7 @@ export function initAuth(): void {
 
 			authState.user = data.session?.user ? toAuthUser(data.session.user) : null;
 			authState.loading = false;
-
-			// Profile upsert must happen under an authenticated session to satisfy RLS.
-			if (data.session?.user) {
-				void syncProfileForCurrentUser().catch((profileError: unknown) => {
-					console.error('Failed to sync user profile after session init:', profileError);
-				});
-			}
+			// Profile sync happens in onAuthStateChange (INITIAL_SESSION fires right after this).
 		})
 		.catch((error: unknown) => {
 			console.error('Unexpected auth initialization error:', error);
@@ -110,12 +107,23 @@ export function initAuth(): void {
 			}
 		}
 
-		// Keep profile row in sync when auth state changes (sign-in, token refresh, etc).
-		if (session?.user) {
-			void syncProfileForCurrentUser().catch((profileError: unknown) => {
-				console.error('Failed to sync user profile after auth state change:', profileError);
-			});
+		const user = session?.user;
+		if (!user) {
+			lastSyncedUserId = null;
+			return;
 		}
+
+		// Sync once per signed-in user, and again when auth metadata changes.
+		// Tracking the id (not whitelisting events) is deterministic: SIGNED_IN also
+		// fires on tab refocus, and first load for a returning user is INITIAL_SESSION.
+		const needsSync = user.id !== lastSyncedUserId || event === 'USER_UPDATED';
+		if (!needsSync) return;
+		lastSyncedUserId = user.id;
+
+		// Profile upsert must happen under an authenticated session to satisfy RLS.
+		void syncProfileForCurrentUser().catch((profileError: unknown) => {
+			console.error('Failed to sync user profile after auth state change:', profileError);
+		});
 	});
 }
 

@@ -1,7 +1,7 @@
 <script lang="ts">
 	/**
 	 * Verify Email Page
-	 * 
+	 *
 	 * Email verification page accessible at /verify-email.
 	 * Handles email verification flow: displays user email, allows resending verification,
 	 * and reports verification/auth changes so the parent page can navigate.
@@ -153,61 +153,61 @@
 		}
 	}
 
-    // "Sign up with a different email" uses this logout function
-    // which allows for a new email to be used.
-    async function handleLogout(): Promise<void> {
-        try {
-            await logout();
+	// "Sign up with a different email" uses this logout function
+	// which allows for a new email to be used.
+	async function handleLogout(): Promise<void> {
+		try {
+			await logout();
 			onSignOut();
-        } catch (err) {
-            error = getAuthErrorMessage(err);
-        }
-    }
+		} catch (err) {
+			error = getAuthErrorMessage(err);
+		}
+	}
 </script>
 
 <div class="flex flex-col gap-2.5">
-    {#if error}
-        <Alert variant="destructive">
-            <Frown />
-            <AlertTitle>Whoops!</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
-        </Alert>
-    {/if}
+	{#if error}
+		<Alert variant="destructive">
+			<Frown />
+			<AlertTitle>Whoops!</AlertTitle>
+			<AlertDescription>{error}</AlertDescription>
+		</Alert>
+	{/if}
 
-    <Alert>
-        <Mail />
-        <AlertTitle>Check your email</AlertTitle>
-        <AlertDescription>
-            {#if userEmail}
-                We've sent a verification email to {userEmail}
-            {:else}
-                Please verify your email address to continue
-            {/if}
-        </AlertDescription>
-    </Alert>
+	<Alert>
+		<Mail />
+		<AlertTitle>Check your email</AlertTitle>
+		<AlertDescription>
+			{#if userEmail}
+				We've sent a verification email to {userEmail}
+			{:else}
+				Please verify your email address to continue
+			{/if}
+		</AlertDescription>
+	</Alert>
 </div>
 
 <div class="flex flex-col gap-5">
-    <div class="flex flex-col gap-2.5">
-        <Button
-            onclick={handleResendVerification}
-            disabled={loading || (!authState.user && !pendingEmail)}
-            class="w-full"
-        >
-            <!-- Buton icon -->
-            {#if loading}
-                <Spinner />
-            {:else if resendFeedback === 'sent'}
-                <Check />
-            {/if}
+	<div class="flex flex-col gap-2.5">
+		<Button
+			onclick={handleResendVerification}
+			disabled={loading || (!authState.user && !pendingEmail)}
+			class="w-full"
+		>
+			<!-- Buton icon -->
+			{#if loading}
+				<Spinner />
+			{:else if resendFeedback === 'sent'}
+				<Check />
+			{/if}
 
-            <!-- Button label -->
-            {#if resendFeedback === 'sent'}
-                Sent
-            {:else}
-                Resend
-            {/if}
-        </Button>
+			<!-- Button label -->
+			{#if resendFeedback === 'sent'}
+				Sent
+			{:else}
+				Resend
+			{/if}
+		</Button>
 
 		{#if authState.user}
 			<Button
@@ -235,16 +235,16 @@
 				{/if}
 			</Button>
 		{/if}
-    </div>
+	</div>
 
-    <!-- Sign up with different email -->
+	<!-- Sign up with different email -->
 	{#if authState.user}
-		<span
-			role="presentation"
-			class="text-sm text-center text-muted-foreground cursor-pointer hover:underline"
+		<button
+			type="button"
+			class="text-center text-sm text-muted-foreground hover:underline"
 			onclick={handleLogout}
 		>
 			Sign up with different email
-		</span>
+		</button>
 	{/if}
 </div>

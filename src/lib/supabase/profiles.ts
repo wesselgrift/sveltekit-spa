@@ -103,7 +103,8 @@ export async function deleteUserProfile(userId: string): Promise<void> {
 }
 
 // Completes onboarding via a security definer RPC that sets the completion
-// timestamp server-side. Direct UPDATE on onboarding_completed_at is revoked.
+// timestamp server-side. The authenticated role has no UPDATE grant on
+// onboarding_completed_at; the RPC runs as the table owner, so only it can set it.
 export async function completeOnboardingRpc(favoriteDrink: string): Promise<void> {
 	const { error } = await supabase.rpc('complete_onboarding', {
 		p_favorite_drink: favoriteDrink

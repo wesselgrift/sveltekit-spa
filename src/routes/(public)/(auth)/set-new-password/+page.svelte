@@ -10,8 +10,8 @@
 	import { SetNewPassword as SetNewPasswordForm } from '$lib/components/auth';
 </script>
 
-<div class="flex md:min-h-screen items-center justify-center p-4 pt-10 md:pt-4">
-	<div class="w-full max-w-sm flex flex-col gap-8 animate-fade-in-zoom">
+<div class="flex items-center justify-center p-4 pt-10 md:min-h-screen md:pt-4">
+	<div class="animate-fade-in-zoom flex w-full max-w-sm flex-col gap-8">
 		<Logo />
 		<h1 class="text-2xl font-medium">Set new password</h1>
 

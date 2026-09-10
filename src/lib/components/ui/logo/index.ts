@@ -1,7 +1,7 @@
-import Root from "./logo.svelte";
+import Root from './logo.svelte';
 
 export {
 	Root,
 	//
-	Root as Logo,
+	Root as Logo
 };

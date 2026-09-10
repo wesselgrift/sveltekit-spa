@@ -12,15 +12,14 @@
 </script>
 
 <!-- Landing page hero section -->
-<div class="flex min-h-screen flex-col items-center justify-start md:justify-center px-4 py-12">
+<div class="flex min-h-screen flex-col items-center justify-start px-4 py-12 md:justify-center">
 	<div class="max-w-xl space-y-8 text-center">
 		<!-- Hero heading and description -->
 		<div class="flex flex-col gap-5">
-			<h1 class="text-4xl font-bold tracking-tight sm:text-6xl">
-				SvelteKit SPA
-			</h1>
+			<h1 class="text-4xl font-bold tracking-tight sm:text-6xl">SvelteKit SPA</h1>
 			<p class="text-lg text-muted-foreground">
-				A minimal boilerplate for building SPAs with SvelteKit using adapter-static, Supabase Auth, Supabase Postgres and shadcn-svelte UI.
+				A minimal boilerplate for building SPAs with SvelteKit using adapter-static, Supabase Auth,
+				Supabase Postgres and shadcn-svelte UI.
 			</p>
 		</div>
 
@@ -34,16 +33,10 @@
 					<span class="sr-only">Checking sign-in status</span>
 				</div>
 			{:else if authState.user}
-				<Button href="/app" variant="outline" size="lg" class="w-full md:w-auto">
-					Go to app
-				</Button>
+				<Button href="/app" variant="outline" size="lg" class="w-full md:w-auto">Go to app</Button>
 			{:else}
-				<Button href="/signup" size="lg" class="w-full md:w-auto">
-					Create account
-				</Button>
-				<Button href="/login" variant="outline" size="lg" class="w-full md:w-auto">
-					Log in
-				</Button>
+				<Button href="/signup" size="lg" class="w-full md:w-auto">Create account</Button>
+				<Button href="/login" variant="outline" size="lg" class="w-full md:w-auto">Log in</Button>
 			{/if}
 		</div>
 
@@ -60,4 +53,3 @@
 		</div>
 	</div>
 </div>
-

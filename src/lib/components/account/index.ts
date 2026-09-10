@@ -1,1 +1,1 @@
-export { default as AccountSettings } from "./account-settings.svelte";
+export { default as AccountSettings } from './account-settings.svelte';

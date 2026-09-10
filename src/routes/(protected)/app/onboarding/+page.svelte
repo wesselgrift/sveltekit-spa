@@ -17,21 +17,20 @@
 	onMount(() => {
 		let cancelled = false;
 
-		void getOnboardingStatus()
-			.then((result) => {
-				if (cancelled) {
-					return;
-				}
+		void getOnboardingStatus().then((result) => {
+			if (cancelled) {
+				return;
+			}
 
-				if (!result.ok) {
-					console.error('Failed to resolve onboarding destination:', result.error);
-					serverError = result.error;
-					loading = false;
-					return;
-				}
+			if (!result.ok) {
+				console.error('Failed to resolve onboarding destination:', result.error);
+				serverError = result.error;
+				loading = false;
+				return;
+			}
 
-				void goto(getOnboardingStepPath(result.data.nextStep));
-			});
+			void goto(getOnboardingStepPath(result.data.nextStep));
+		});
 
 		return () => {
 			cancelled = true;
@@ -40,11 +39,11 @@
 </script>
 
 {#if loading}
-	<div class="flex items-center justify-center min-h-screen">
+	<div class="flex min-h-screen items-center justify-center">
 		<Spinner class="size-6" />
 	</div>
 {:else if serverError}
-	<div class="flex items-center justify-center min-h-screen p-4">
+	<div class="flex min-h-screen items-center justify-center p-4">
 		<Alert variant="destructive" class="w-full max-w-md">
 			<AlertTitle>Unable to continue onboarding</AlertTitle>
 			<AlertDescription>{serverError}</AlertDescription>

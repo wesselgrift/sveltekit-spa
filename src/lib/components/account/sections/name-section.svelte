@@ -1,8 +1,7 @@
 <script lang="ts">
-
 	/**
 	 * Account section / name component
-	 * Show display name, split by first name and fill remainder into last name 
+	 * Show display name, split by first name and fill remainder into last name
 	 * Allows for name change
 	 */
 
@@ -28,9 +27,7 @@
 	let savedDisplayName = $state<string | null>(null);
 
 	// Get current name parts - use local override if available, otherwise from user
-	let nameParts = $derived(
-		splitDisplayName(savedDisplayName ?? authState.user?.displayName ?? '')
-	);
+	let nameParts = $derived(splitDisplayName(savedDisplayName ?? authState.user?.displayName ?? ''));
 
 	const form = superForm(defaults(zod4(nameSchema)), {
 		validators: zod4(nameSchema),
@@ -55,7 +52,7 @@
 					savedDisplayName = newDisplayName;
 
 					success = true;
-					
+
 					// Close form after a short delay to show success message
 					setTimeout(() => {
 						closeEditForm();
@@ -66,7 +63,7 @@
 					loading = false;
 				}
 			}
-		},
+		}
 	});
 
 	const { form: formData, enhance } = form;
@@ -89,17 +86,19 @@
 </script>
 
 <div class="flex flex-col border-b">
-	<div class="flex flex-row gap-4 p-4 w-full">
+	<div class="flex w-full flex-row gap-4 p-4">
 		<IdCardLanyard class="shrink-0" strokeWidth={1.5} />
 		<div class="flex flex-col gap-1 text-sm">
 			<p class="font-medium">Name</p>
 			<p class="text-muted-foreground">{nameParts.firstName} {nameParts.lastName}</p>
 		</div>
-		<Button onclick={openEditForm} variant="outline" size="sm" class="ml-auto" disabled={changeName}>Change name</Button>
+		<Button onclick={openEditForm} variant="outline" size="sm" class="ml-auto" disabled={changeName}
+			>Change name</Button
+		>
 	</div>
 
 	{#if changeName}
-		<form method="POST" use:enhance class="flex flex-col p-4 pl-14 max-w-sm gap-5">
+		<form method="POST" use:enhance class="flex max-w-sm flex-col gap-5 p-4 pl-14">
 			<Form.Field {form} name="firstName">
 				<Form.Control>
 					{#snippet children({ props })}
@@ -118,17 +117,21 @@
 				</Form.Control>
 				<Form.FieldErrors />
 			</Form.Field>
-			
+
 			{#if serverError}
-				<div class="h-8 px-2 flex gap-2 items-center rounded-md text-sm border text-red-700 bg-red-50 border-red-200 dark:text-red-50 dark:bg-red-700 dark:border-red-600">
+				<div
+					class="flex h-8 items-center gap-2 rounded-md border border-red-200 bg-red-50 px-2 text-sm text-red-700 dark:border-red-600 dark:bg-red-700 dark:text-red-50"
+				>
 					<CircleAlert class="size-4" />
 					{serverError}
 				</div>
 			{/if}
 
-			<div class="flex flex-row gap-2 mb-4">
+			<div class="mb-4 flex flex-row gap-2">
 				{#if success}
-					<div class="h-8 px-2 flex gap-2 items-center rounded-md text-sm border text-emerald-700 bg-emerald-50 border-emerald-100 dark:text-emerald-200 dark:bg-emerald-700 dark:border-emerald-600">
+					<div
+						class="flex h-8 items-center gap-2 rounded-md border border-emerald-100 bg-emerald-50 px-2 text-sm text-emerald-700 dark:border-emerald-600 dark:bg-emerald-700 dark:text-emerald-200"
+					>
 						<Check class="size-4" />
 						Name updated
 					</div>
@@ -139,7 +142,13 @@
 						{/if}
 						Save
 					</Form.Button>
-					<Button type="button" onclick={closeEditForm} variant="outline" size="sm" disabled={loading}>Cancel</Button>
+					<Button
+						type="button"
+						onclick={closeEditForm}
+						variant="outline"
+						size="sm"
+						disabled={loading}>Cancel</Button
+					>
 				{/if}
 			</div>
 		</form>

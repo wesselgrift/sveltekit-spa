@@ -1,10 +1,10 @@
 <script lang="ts">
-    /**
-     * Verify Email Page
-     * 
-     * Redirects unauthenticated users to login and verified users to their destination.
-     * Uses VerifyEmail component for email verification with callback-based navigation.
-     */
+	/**
+	 * Verify Email Page
+	 *
+	 * Redirects unauthenticated users to login and verified users to their destination.
+	 * Uses VerifyEmail component for email verification with callback-based navigation.
+	 */
 
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
@@ -53,20 +53,19 @@
 	};
 </script>
 
-<div class="flex md:min-h-screen items-center justify-center p-4 pt-10 md:pt-4">
-	<div class="w-full max-w-sm flex flex-col gap-5 animate-fade-in-zoom">
-        <div class="mb-2">
-            <Logo />
-        </div>
-		
-        <!-- Verify email component -->
-        <VerifyEmail
+<div class="flex items-center justify-center p-4 pt-10 md:min-h-screen md:pt-4">
+	<div class="animate-fade-in-zoom flex w-full max-w-sm flex-col gap-5">
+		<div class="mb-2">
+			<Logo />
+		</div>
+
+		<!-- Verify email component -->
+		<VerifyEmail
 			onRequireAuth={handleRequireAuth}
 			onVerified={handleVerified}
 			onSignOut={handleSignOut}
-			pendingEmail={pendingEmail}
-			allowUnauthenticated={allowUnauthenticated}
+			{pendingEmail}
+			{allowUnauthenticated}
 		/>
 	</div>
 </div>
-
